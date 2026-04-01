@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AM Soluciones — Sistema de Gestión</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #0d0f14;
+  --surface: #13161e;
+  --surface2: #1a1e28;
+  --surface3: #222738;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --accent: #3b82f6;
+  --accent2: #6366f1;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #475569;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* ===== LOGIN ===== */
+#login-screen {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  padding: 20px;
+}
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 40px;
+  width: 100%; max-width: 400px;
+}
+.login-logo {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 32px;
+}
+.login-logo-icon {
+  width: 44px; height: 44px; background: var(--accent);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px; color: #fff; font-family: var(--mono);
+}
+.login-logo-text { font-size: 18px; font-weight: 600; }
+.login-logo-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.login-title { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+.login-sub { font-size: 13px; color: var(--text3); margin-bottom: 28px; }
+.login-field { margin-bottom: 14px; }
+.login-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+.login-field input {
+  width: 100%; padding: 11px 14px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text); font-size: 14px; font-family: var(--sans);
+  transition: border 0.15s;
+}
+.login-field input:focus { outline: none; border-color: var(--accent); }
+.login-btn {
+  width: 100%; padding: 12px; background: var(--accent);
+  border: none; border-radius: 10px; color: #fff;
+  font-size: 14px; font-weight: 600; font-family: var(--sans);
+  cursor: pointer; transition: background 0.15s; margin-top: 6px;
+}
+.login-btn:hover { background: #2563eb; }
+.login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.login-error {
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 12px; color: #f87171; margin-top: 12px;
+  display: none;
+}
+.login-footer { font-size: 11px; color: var(--text3); text-align: center; margin-top: 20px; }
+
+/* ===== APP ===== */
+#app-screen { display: none; }
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+}
+.sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); }
+.logo-mark { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; color: #fff; font-family: var(--mono); }
+.logo-text { font-size: 13px; font-weight: 600; }
+.logo-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.nav { padding: 12px 10px; flex: 1; overflow-y: auto; }
+.nav-section { font-size: 10px; font-weight: 500; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 10px 4px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--text2); font-size: 13px; font-weight: 400; transition: all 0.15s; margin-bottom: 1px; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(59,130,246,0.12); color: var(--accent); font-weight: 500; }
+.nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+.nav-item.active .nav-icon { opacity: 1; }
+.sidebar-footer { padding: 12px 10px; border-top: 1px solid var(--border); }
+.user-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; justify-content: space-between; }
+.user-row:hover { background: var(--surface2); }
+.user-info { display: flex; align-items: center; gap: 8px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; flex-shrink: 0; }
+.user-name { font-size: 12px; font-weight: 500; color: var(--text); }
+.user-role { font-size: 10px; color: var(--text3); }
+.logout-btn { font-size: 11px; color: var(--text3); cursor: pointer; padding: 4px; border-radius: 4px; }
+.logout-btn:hover { color: var(--red); }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: 56px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; background: var(--surface); }
+.topbar-title { font-size: 15px; font-weight: 600; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.badge-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.pill-green { background: rgba(16,185,129,0.12); color: var(--green); }
+.pill-amber { background: rgba(245,158,11,0.12); color: var(--amber); }
+.pill-red { background: rgba(239,68,68,0.12); color: var(--red); }
+.pill-blue { background: rgba(59,130,246,0.12); color: var(--accent); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; font-family: var(--sans); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #2563eb; }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.content { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* SECTIONS */
+.section { display: none; }
+.section.active { display: block; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+
+/* GRIDS */
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+.grid-21 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+
+/* KPI CARD */
+.kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; position: relative; overflow: hidden; }
+.kpi-label { font-size: 11px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.kpi-value { font-size: 26px; font-weight: 600; color: var(--text); font-family: var(--mono); line-height: 1; }
+.kpi-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
+.kpi-trend { font-size: 11px; font-weight: 500; margin-top: 6px; }
+.kpi-trend.up { color: var(--green); }
+.kpi-accent { position: absolute; top: 0; right: 0; width: 3px; height: 100%; border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+
+/* PROGRESS */
+.progress { height: 4px; background: var(--surface3); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+.progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.td-main { color: var(--text); font-weight: 500; }
+
+/* FORM */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; color: var(--text2); margin-bottom: 5px; display: block; font-weight: 500; }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 9px 12px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-size: 13px; font-family: var(--sans); transition: border 0.15s; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-select { appearance: none; }
+
+/* KPI CHECK */
+.kpi-check { display: flex; flex-direction: column; gap: 8px; }
+.kpi-row { display: flex; align-items: center; gap: 12px; background: var(--surface2); border-radius: 8px; padding: 10px 12px; }
+.kpi-row label { font-size: 13px; color: var(--text2); flex: 1; }
+.kpi-row input[type=range] { flex: 1; accent-color: var(--accent); }
+.kpi-pts { font-family: var(--mono); font-size: 13px; color: var(--accent); min-width: 32px; text-align: right; }
+
+/* OBRA CARD */
+.obra-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+.obra-card:hover { border-color: var(--border2); }
+.obra-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.obra-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.obra-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.obra-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+
+/* CHIPS */
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.chip-green { background: rgba(16,185,129,0.12); color: #34d399; }
+.chip-amber { background: rgba(245,158,11,0.12); color: #fbbf24; }
+.chip-red { background: rgba(239,68,68,0.12); color: #f87171; }
+.chip-blue { background: rgba(59,130,246,0.12); color: #60a5fa; }
+.chip-gray { background: rgba(148,163,184,0.1); color: #94a3b8; }
+
+/* SECTION HEADER */
+.section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-hdr h2 { font-size: 16px; font-weight: 600; color: var(--text); }
+.section-hdr p { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 24px; width: 520px; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+/* LOADING SPINNER */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+.empty-state .icon { font-size: 32px; margin-bottom: 10px; }
+
+/* UPLOAD */
+.upload-zone { border: 2px dashed var(--border2); border-radius: var(--radius-lg); padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.upload-zone:hover { border-color: var(--accent); background: rgba(59,130,246,0.04); }
+
+/* TICKET RESULT */
+.ticket-result { background: var(--surface2); border-radius: var(--radius); padding: 14px; margin-top: 12px; font-size: 12px; }
+.ticket-line { display: flex; justify-content: space-between; padding: 4px 0; }
+.ticket-line .key { color: var(--text3); }
+.ticket-line .val { color: var(--text); font-weight: 500; font-family: var(--mono); }
+
+/* FINANCIERO */
+.cashflow-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.cashflow-row:last-child { border-bottom: none; }
+.cf-label { color: var(--text2); }
+.cf-amount { font-family: var(--mono); font-weight: 500; }
+.cf-green { color: var(--green); }
+.cf-red { color: var(--red); }
+.cf-amber { color: var(--amber); }
+.cf-section { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 14px 0 6px; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .logo-text, .logo-sub, .nav-label, .nav-section, .user-name, .user-role, .logout-btn { display: none; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .nav-icon { opacity: 1; }
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .grid-21 { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .content { padding: 16px; }
+}
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 12px 18px;
+  font-size: 13px; color: var(--text);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  z-index: 200; transform: translateY(100px); opacity: 0;
+  transition: all 0.3s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: rgba(16,185,129,0.3); }
+.toast.error { border-color: rgba(239,68,68,0.3); }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">AM</div>
+      <div>
+        <div class="login-logo-text">AM Soluciones</div>
+        <div class="login-logo-sub">Sistema de Gestión Interno</div>
+      </div>
+    </div>
+    <div class="login-title">Bienvenido</div>
+    <div class="login-sub">Ingresá con tu email y contraseña</div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="tu@amsoluciones.com.ar" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-footer">AM Soluciones Integrales SRL · Córdoba, Argentina</div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app-screen">
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">AM</div>
+        <div>
+          <div class="logo-text">AM Soluciones</div>
+          <div class="logo-sub">Sistema de Gestión</div>
+        </div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" onclick="navigate('dashboard',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+        <span class="nav-label">Dashboard</span>
+      </div>
+      <div class="nav-item" onclick="navigate('obras',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V6l6-4 6 4v8"/><rect x="6" y="9" width="4" height="5"/></svg>
+        <span class="nav-label">Obras</span>
+      </div>
+      <div class="nav-item" onclick="navigate('reporte',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h4M6 9h4M6 12h2"/></svg>
+        <span class="nav-label">Reporte diario</span>
+      </div>
+      <div class="nav-section">Gestión</div>
+      <div class="nav-item" onclick="navigate('comisiones',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M6 7h4M6 9h4"/></svg>
+        <span class="nav-label">Comisiones</span>
+      </div>
+      <div class="nav-item" onclick="navigate('viaticos',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.5 4h4l-3.5 2.5 1.5 4L8 10l-3.5 2.5 1.5-4L2.5 6H7z"/></svg>
+        <span class="nav-label">Viáticos</span>
+      </div>
+      <div class="nav-item" onclick="navigate('tickets',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="9" rx="1.5"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg>
+        <span class="nav-label">Lector tickets</span>
+      </div>
+      <div class="nav-section">Finanzas</div>
+      <div class="nav-item" onclick="navigate('financiero',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/></svg>
+        <span class="nav-label">Estado financiero</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-info">
+          <div class="avatar" id="sidebar-avatar">AP</div>
+          <div>
+            <div class="user-name" id="sidebar-name">—</div>
+            <div class="user-role" id="sidebar-role">—</div>
+          </div>
+        </div>
+        <div class="logout-btn" onclick="doLogout()" title="Cerrar sesión">✕</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <span class="badge-pill pill-green"><span class="dot"></span>Sistema activo</span>
+        <button class="btn btn-ghost" onclick="navigate('reporte',document.querySelector('[onclick*=reporte]'))">+ Reporte diario</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div class="section active" id="sec-dashboard">
+        <div class="grid-4" style="margin-bottom:14px" id="dash-kpis">
+          <div class="kpi-card">
+            <div class="kpi-accent" style="background:var(--green)"></div>
+            <div class="kpi-label">Obras activas</div>
+            <div class="kpi-value" id="dash-obras-activas"><div class="spinner"></div></div>
+            <div class="kpi-sub">en este momento</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-accent" style="background:var(--accent)"></div>
+            <div class="kpi-label">Reportes hoy</div>
+            <div class="kpi-value" id="dash-reportes-hoy"><div class="spinner"></div></div>
+            <div class="kpi-sub" id="dash-reportes-sub">cargados hoy</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-accent" style="background:var(--amber)"></div>
+            <div class="kpi-label">KPI promedio</div>
+            <div class="kpi-value" id="dash-kpi-prom"><div class="spinner"></div></div>
+            <div class="kpi-sub">últimos reportes</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-accent" style="background:var(--red)"></div>
+            <div class="kpi-label">Viáticos sin rendir</div>
+            <div class="kpi-value" id="dash-viaticos-sin"><div class="spinner"></div></div>
+            <div class="kpi-sub">empleados pendientes</div>
+          </div>
+        </div>
+
+        <div class="grid-21">
+          <div class="card">
+            <div class="section-hdr">
+              <div><h2>Obras en curso</h2><p>Avance y estado actual</p></div>
+            </div>
+            <div id="dash-obras-list"><div class="empty-state"><div class="spinner"></div></div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card">
+              <div class="section-hdr"><div><h2>Alertas</h2></div></div>
+              <div id="dash-alertas" style="display:flex;flex-direction:column;gap:8px">
+                <div class="empty-state"><div class="spinner"></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-hdr"><div><h2>Últimos reportes</h2></div></div>
+              <div id="dash-ultimos-reportes" style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+                <div class="empty-state"><div class="spinner"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== OBRAS ===== -->
+      <div class="section" id="sec-obras">
+        <div class="section-hdr">
+          <div><h2>Obras</h2><p>Todas las obras registradas</p></div>
+          <button class="btn btn-primary" onclick="openNuevaObra()">+ Nueva obra</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Obra</th><th>Cliente</th><th>Ubicación</th><th>Inicio</th><th>Presupuesto</th><th>Avance</th><th>Estado</th></tr></thead>
+              <tbody id="obras-tbody"><tr><td colspan="7" class="empty-state"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== REPORTE DIARIO ===== -->
+      <div class="section" id="sec-reporte">
+        <div class="section-hdr"><div><h2>Reporte diario de obra</h2><p>Completá el formulario al final de cada jornada</p></div></div>
+        <div class="grid-21">
+          <div class="card">
+            <div class="form-group">
+              <label class="form-label">Obra</label>
+              <select class="form-select" id="rpt-obra-id"></select>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Fecha</label>
+                <input type="date" class="form-input" id="rpt-fecha">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Avance del día (%)</label>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <input type="range" min="0" max="100" value="10" id="avance-slider" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('avance-val').textContent=this.value+'%'">
+                  <span style="font-family:var(--mono);font-size:14px;color:var(--accent);min-width:36px" id="avance-val">10%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Evaluación KPIs del día</label>
+              <div class="kpi-check">
+                <div class="kpi-row">
+                  <label>Cumplimiento de plazo</label>
+                  <input type="range" min="0" max="10" value="8" id="kpi-plazo" oninput="updateKpi(this)">
+                  <span class="kpi-pts">8/10</span>
+                </div>
+                <div class="kpi-row">
+                  <label>Calidad / sin errores</label>
+                  <input type="range" min="0" max="10" value="9" id="kpi-calidad" oninput="updateKpi(this)">
+                  <span class="kpi-pts">9/10</span>
+                </div>
+                <div class="kpi-row">
+                  <label>Uso de materiales</label>
+                  <input type="range" min="0" max="10" value="7" id="kpi-materiales" oninput="updateKpi(this)">
+                  <span class="kpi-pts">7/10</span>
+                </div>
+                <div class="kpi-row">
+                  <label>Conformidad cliente</label>
+                  <input type="range" min="0" max="10" value="10" id="kpi-conformidad" oninput="updateKpi(this)">
+                  <span class="kpi-pts">10/10</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Gastos del día</label>
+              <div style="display:flex;flex-direction:column;gap:6px" id="gastos-list">
+                <div style="display:flex;gap:6px;align-items:center">
+                  <select class="form-select" style="flex:1.2"><option>Materiales</option><option>Herramientas</option><option>Combustible</option><option>Alimentos</option><option>Hospedaje</option><option>Otro</option></select>
+                  <input type="text" class="form-input" placeholder="Descripción" style="flex:2">
+                  <input type="number" class="form-input" placeholder="$" style="flex:1;font-family:var(--mono)">
+                </div>
+              </div>
+              <button class="btn btn-ghost" style="margin-top:8px;font-size:11px" onclick="addGastoRow()">+ Agregar gasto</button>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">¿Hubo algún inconveniente?</label>
+              <select class="form-select" id="inconveniente-sel" onchange="document.getElementById('inconveniente-box').style.display=this.value==='si'?'block':'none'">
+                <option value="no">No, jornada normal</option>
+                <option value="si">Sí — detallar</option>
+              </select>
+            </div>
+            <div class="form-group" id="inconveniente-box" style="display:none">
+              <label class="form-label">Descripción del inconveniente</label>
+              <textarea class="form-textarea" id="rpt-inconveniente" placeholder="Describir qué pasó, cómo se resolvió o qué se necesita..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Notas adicionales</label>
+              <textarea class="form-textarea" id="rpt-notas" placeholder="Observaciones, materiales que faltan, coordinación para mañana..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%" id="btn-enviar-reporte" onclick="enviarReporte()">Enviar reporte del día</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card">
+              <div class="section-hdr"><div><h2>Puntaje KPI</h2></div></div>
+              <div style="text-align:center;padding:16px 0">
+                <div style="font-size:48px;font-weight:600;font-family:var(--mono);color:var(--green)" id="kpi-score">85</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px">puntos sobre 100</div>
+                <div style="margin-top:10px"><span class="chip chip-blue" id="kpi-nivel">Muy bueno → Bono 6%</span></div>
+              </div>
+              <div class="progress"><div class="progress-fill" style="width:85%;background:var(--green)" id="kpi-bar"></div></div>
+            </div>
+            <div class="card">
+              <div class="section-hdr"><div><h2>Reportes recientes</h2></div></div>
+              <div id="reportes-recientes" style="font-size:12px;display:flex;flex-direction:column;gap:6px">
+                <div class="empty-state"><div class="spinner"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TICKETS IA ===== -->
+      <div class="section" id="sec-tickets">
+        <div class="section-hdr"><div><h2>Lector de tickets con IA</h2><p>Subí el ticket y la IA lo escanea y clasifica automáticamente</p></div></div>
+        <div class="grid-2">
+          <div>
+            <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+              <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFile(this)">
+              <div style="font-size:28px;margin-bottom:10px">📄</div>
+              <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px">Subí una foto del ticket</div>
+              <div style="font-size:12px;color:var(--text3)">JPG, PNG · Desde cámara del celular</div>
+            </div>
+            <div id="ticket-preview" style="display:none;margin-top:12px">
+              <img id="preview-img" style="width:100%;border-radius:var(--radius);border:1px solid var(--border)" alt="ticket">
+            </div>
+            <div id="ticket-loading" style="display:none;margin-top:16px;text-align:center">
+              <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Analizando con IA...</div>
+              <div class="progress"><div class="progress-fill" id="ai-progress" style="width:0%;background:var(--accent);transition:width 1.5s"></div></div>
+            </div>
+            <div id="ticket-result" style="display:none" class="ticket-result">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">Resultado del análisis</div>
+              <div class="ticket-line"><span class="key">Comercio</span><span class="val" id="tr-comercio">—</span></div>
+              <div class="ticket-line"><span class="key">Fecha</span><span class="val" id="tr-fecha-ticket">—</span></div>
+              <div class="ticket-line"><span class="key">Monto total</span><span class="val" id="tr-monto">—</span></div>
+              <div class="ticket-line"><span class="key">Categoría sugerida</span><span class="val" id="tr-cat">—</span></div>
+              <div style="margin-top:10px;display:flex;gap:6px">
+                <select class="form-select" id="ticket-cat-confirm" style="flex:1;font-size:12px">
+                  <option>Materiales</option><option>Combustible</option><option>Herramientas</option><option>Alimentos</option><option>Hospedaje</option><option>Otro</option>
+                </select>
+                <button class="btn btn-primary" onclick="confirmarTicket()">Confirmar y guardar</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-hdr"><div><h2>Tickets registrados</h2><p>Este mes</p></div></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Fecha</th><th>Comercio</th><th>Categoría</th><th>Monto</th></tr></thead>
+                <tbody id="tickets-tbody"><tr><td colspan="4" class="empty-state"><div class="spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FINANCIERO ===== -->
+      <div class="section" id="sec-financiero">
+        <div class="section-hdr"><div><h2>Estado financiero</h2><p>Flujo de caja y posición económica</p></div></div>
+        <div class="grid-4" style="margin-bottom:14px">
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--green)"></div><div class="kpi-label">Presupuesto total obras</div><div class="kpi-value" id="fin-presupuesto"><div class="spinner"></div></div><div class="kpi-sub">obras activas</div></div>
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--accent)"></div><div class="kpi-label">Gastos registrados</div><div class="kpi-value" id="fin-gastos"><div class="spinner"></div></div><div class="kpi-sub">este mes</div></div>
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--amber)"></div><div class="kpi-label">Viáticos anticipados</div><div class="kpi-value" id="fin-viaticos"><div class="spinner"></div></div><div class="kpi-sub">mes actual</div></div>
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--green)"></div><div class="kpi-label">Obras activas</div><div class="kpi-value" id="fin-obras"><div class="spinner"></div></div><div class="kpi-sub">en ejecución</div></div>
+        </div>
+        <div class="grid-21">
+          <div class="card">
+            <div class="section-hdr"><div><h2>Rentabilidad por obra</h2></div></div>
+            <div id="fin-rentabilidad"><div class="empty-state"><div class="spinner"></div></div></div>
+          </div>
+          <div class="card">
+            <div class="section-hdr"><div><h2>Gastos por categoría</h2></div></div>
+            <div id="fin-categorias"><div class="empty-state"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== COMISIONES ===== -->
+      <div class="section" id="sec-comisiones">
+        <div class="section-hdr"><div><h2>Comisiones e incentivos</h2><p>Cálculo automático basado en KPIs</p></div></div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Encargado</th><th>Obra</th><th>Fecha</th><th>KPI</th><th>Nivel</th><th>Bono %</th></tr></thead>
+              <tbody id="comisiones-tbody"><tr><td colspan="6" class="empty-state"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== VIÁTICOS ===== -->
+      <div class="section" id="sec-viaticos">
+        <div class="section-hdr">
+          <div><h2>Control de viáticos</h2><p>Anticipos y rendiciones por empleado</p></div>
+          <button class="btn btn-primary" onclick="openNuevoViatico()">+ Nuevo anticipo</button>
+        </div>
+        <div class="grid-3" style="margin-bottom:14px">
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--amber)"></div><div class="kpi-label">Total anticipado</div><div class="kpi-value" id="via-total"><div class="spinner"></div></div></div>
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--green)"></div><div class="kpi-label">Rendido</div><div class="kpi-value" id="via-rendido" style="color:var(--green)"><div class="spinner"></div></div></div>
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--red)"></div><div class="kpi-label">Sin rendir</div><div class="kpi-value" id="via-pendiente" style="color:var(--red)"><div class="spinner"></div></div></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Empleado</th><th>Obra</th><th>Anticipo</th><th>Rendido</th><th>Diferencia</th><th>Estado</th></tr></thead>
+              <tbody id="viaticos-tbody"><tr><td colspan="6" class="empty-state"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+</div><!-- /app-screen -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">—</div>
+    <div id="modal-body" style="font-size:13px;color:var(--text2);line-height:1.6"></div>
+    <div class="modal-footer" id="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================
+// SUPABASE INIT
+// =============================================
+const SUPABASE_URL = 'https://mychvyrgupdxxywppnzx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_P8M63XVzuislYvyidFoHnA_gar6Y0XN';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// =============================================
+// AUTH
+// =============================================
+let currentUser = null;
+let currentUsuario = null;
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Ingresando...';
+  const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    errEl.textContent = 'Email o contraseña incorrectos. Verificá tus datos.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Ingresar';
+    return;
+  }
+  currentUser = data.user;
+  await loadUsuario(email);
+  showApp();
+}
+
+async function loadUsuario(email) {
+  const { data } = await db.from('usuarios').select('*').eq('email', email).single();
+  currentUsuario = data;
+  if (data) {
+    const iniciales = data.nombre.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('sidebar-avatar').textContent = iniciales;
+    document.getElementById('sidebar-name').textContent = data.nombre.split(' ')[0];
+    const roles = { dueno:'Dueño', socio:'Socia', gestion:'Gestión', tecnico:'Técnico', encargado:'Encargado' };
+    document.getElementById('sidebar-role').textContent = roles[data.rol] || data.rol;
+  }
+}
+
+async function doLogout() {
+  await db.auth.signOut();
+  currentUser = null; currentUsuario = null;
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  loadDashboard();
+  loadObrasSelect();
+  loadReportesRecientes();
+  loadViaticos();
+  loadComisiones();
+  loadFinanciero();
+  loadTickets();
+}
+
+// Auto-login si ya hay sesión
+window.addEventListener('load', async () => {
+  const { data: { session } } = await db.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadUsuario(session.user.email);
+    showApp();
+  }
+});
+
+// Enter en login
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+
+// =============================================
+// NAVIGATION
+// =============================================
+const titles = { dashboard:'Dashboard', obras:'Obras', reporte:'Reporte diario', comisiones:'Comisiones e incentivos', viaticos:'Viáticos', tickets:'Lector de tickets', financiero:'Estado financiero' };
+function navigate(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  if(el) el.classList.add('active');
+  document.getElementById('topbar-title').textContent = titles[id] || id;
+}
+
+// =============================================
+// FORMATTERS
+// =============================================
+function fmtPeso(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return '$' + Math.round(n/1000) + 'K';
+  return '$' + n.toLocaleString('es-AR');
+}
+function fmtFecha(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' });
+}
+function estadoChip(e) {
+  const map = { en_curso:'chip-green', demorada:'chip-amber', iniciando:'chip-blue', pausada:'chip-gray', cerrada:'chip-gray' };
+  const label = { en_curso:'En curso', demorada:'Demorada', iniciando:'Iniciando', pausada:'Pausada', cerrada:'Cerrada' };
+  return `<span class="chip ${map[e]||'chip-gray'}">${label[e]||e}</span>`;
+}
+function kpiChip(score) {
+  if (score >= 90) return '<span class="chip chip-green">Excelente</span>';
+  if (score >= 75) return '<span class="chip chip-blue">Muy bueno</span>';
+  if (score >= 60) return '<span class="chip chip-amber">Aceptable</span>';
+  return '<span class="chip chip-red">Por mejorar</span>';
+}
+function kpiBono(score) {
+  if (score >= 90) return 8;
+  if (score >= 75) return 6;
+  if (score >= 60) return 4;
+  if (score >= 40) return 3;
+  return 0;
+}
+
+// =============================================
+// DASHBOARD
+// =============================================
+async function loadDashboard() {
+  const today = new Date().toISOString().split('T')[0];
+
+  // Obras activas
+  const { data: obras } = await db.from('obras').select('*').in('estado', ['en_curso','demorada','iniciando']);
+  document.getElementById('dash-obras-activas').textContent = obras?.length ?? 0;
+
+  // Reportes hoy
+  const { data: repHoy } = await db.from('reportes').select('id, encargado_id, obras(nombre), usuarios(nombre)').eq('fecha', today);
+  document.getElementById('dash-reportes-hoy').textContent = repHoy?.length ?? 0;
+
+  // KPI promedio
+  const { data: repRecientes } = await db.from('reportes').select('kpi_total').order('created_at', { ascending: false }).limit(10);
+  const kpiProm = repRecientes?.length ? Math.round(repRecientes.reduce((a,r) => a + (r.kpi_total||0), 0) / repRecientes.length) : '—';
+  document.getElementById('dash-kpi-prom').textContent = kpiProm;
+
+  // Viáticos sin rendir
+  const { data: vias } = await db.from('viaticos').select('*').in('estado', ['pendiente','parcial']);
+  document.getElementById('dash-viaticos-sin').textContent = vias?.length ?? 0;
+
+  // Lista obras
+  const listaEl = document.getElementById('dash-obras-list');
+  if (!obras?.length) { listaEl.innerHTML = '<div class="empty-state"><div class="icon">🏗️</div>No hay obras activas</div>'; }
+  else {
+    listaEl.innerHTML = obras.map(o => `
+      <div class="obra-card">
+        <div class="obra-header">
+          <div><div class="obra-name">${o.nombre} — ${o.ubicacion||''}</div><div class="obra-meta">${o.cliente}</div></div>
+          ${estadoChip(o.estado)}
+        </div>
+        <div class="obra-bar-label"><span>Avance</span><span>${o.avance_total||0}%</span></div>
+        <div class="progress"><div class="progress-fill" style="width:${o.avance_total||0}%;background:${o.estado==='demorada'?'var(--amber)':'var(--green)'}"></div></div>
+      </div>`).join('');
+  }
+
+  // Alertas
+  const alertasEl = document.getElementById('dash-alertas');
+  const alertas = [];
+  obras?.filter(o => o.estado === 'demorada').forEach(o => {
+    alertas.push(`<div style="display:flex;gap:8px;align-items:flex-start;padding:8px;background:rgba(245,158,11,0.07);border-radius:8px;border:1px solid rgba(245,158,11,0.15)"><span style="color:var(--amber)">⚠</span><div><div style="font-size:12px;font-weight:500;color:var(--text)">${o.nombre} — demorada</div><div style="font-size:11px;color:var(--text3)">${o.ubicacion}</div></div></div>`);
+  });
+  if (repHoy?.length > 0) {
+    alertas.push(`<div style="display:flex;gap:8px;align-items:flex-start;padding:8px;background:rgba(16,185,129,0.07);border-radius:8px;border:1px solid rgba(16,185,129,0.15)"><span style="color:var(--green)">✓</span><div><div style="font-size:12px;font-weight:500;color:var(--text)">${repHoy.length} reporte${repHoy.length>1?'s':''} recibido${repHoy.length>1?'s':''} hoy</div></div></div>`);
+  }
+  alertasEl.innerHTML = alertas.length ? alertas.join('') : '<div class="empty-state">Sin alertas activas</div>';
+
+  // Últimos reportes
+  const { data: ultRep } = await db.from('reportes').select('id, fecha, obras(nombre), usuarios(nombre), kpi_total').order('created_at', { ascending: false }).limit(5);
+  const urEl = document.getElementById('dash-ultimos-reportes');
+  if (!ultRep?.length) { urEl.innerHTML = '<div class="empty-state">Sin reportes aún</div>'; }
+  else {
+    urEl.innerHTML = ultRep.map(r => `
+      <div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface2);border-radius:6px">
+        <div><div style="color:var(--text);font-weight:500">${r.obras?.nombre||'—'}</div><div style="color:var(--text3);font-size:11px">${fmtFecha(r.fecha)} · ${r.usuarios?.nombre||'—'}</div></div>
+        ${r.kpi_total ? kpiChip(r.kpi_total) : '<span class="chip chip-gray">—</span>'}
+      </div>`).join('');
+  }
+}
+
+// =============================================
+// OBRAS
+// =============================================
+async function loadObras() {
+  const { data: obras } = await db.from('obras').select('*').order('created_at', { ascending: false });
+  const tbody = document.getElementById('obras-tbody');
+  if (!obras?.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No hay obras registradas</td></tr>'; return; }
+  tbody.innerHTML = obras.map(o => `
+    <tr>
+      <td class="td-main">${o.nombre}</td>
+      <td>${o.cliente}</td>
+      <td>${o.ubicacion||'—'}</td>
+      <td>${fmtFecha(o.fecha_inicio)}</td>
+      <td style="font-family:var(--mono)">${fmtPeso(o.presupuesto)}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:60px;margin-top:0"><div class="progress-fill" style="width:${o.avance_total||0}%;background:var(--green)"></div></div><span style="font-family:var(--mono);font-size:12px">${o.avance_total||0}%</span></div></td>
+      <td>${estadoChip(o.estado)}</td>
+    </tr>`).join('');
+}
+
+async function loadObrasSelect() {
+  const { data: obras } = await db.from('obras').select('id, nombre, ubicacion').in('estado', ['en_curso','demorada','iniciando']);
+  const sel = document.getElementById('rpt-obra-id');
+  sel.innerHTML = obras?.map(o => `<option value="${o.id}">${o.nombre}${o.ubicacion ? ' — '+o.ubicacion : ''}</option>`).join('') || '<option>Sin obras activas</option>';
+}
+
+function openNuevaObra() {
+  document.getElementById('modal-title').textContent = 'Nueva obra';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label class="form-label">Nombre de la obra</label><input type="text" class="form-input" id="no-nombre" placeholder="Ej: Fibra óptica — Mendoza"></div>
+    <div class="form-group"><label class="form-label">Cliente</label><input type="text" class="form-input" id="no-cliente" placeholder="Nombre del cliente"></div>
+    <div class="form-group"><label class="form-label">Ubicación / Ciudad</label><input type="text" class="form-input" id="no-ubicacion" placeholder="Córdoba, Jujuy, CABA..."></div>
+    <div class="grid-2">
+      <div class="form-group"><label class="form-label">Fecha de inicio</label><input type="date" class="form-input" id="no-inicio"></div>
+      <div class="form-group"><label class="form-label">Presupuesto ($)</label><input type="number" class="form-input" id="no-presupuesto" placeholder="0" style="font-family:var(--mono)"></div>
+    </div>`;
+  document.getElementById('modal-footer').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarObra()">Guardar obra</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+async function guardarObra() {
+  const nombre = document.getElementById('no-nombre').value.trim();
+  const cliente = document.getElementById('no-cliente').value.trim();
+  if (!nombre || !cliente) { showToast('Completá nombre y cliente', 'error'); return; }
+  const { error } = await db.from('obras').insert({
+    nombre, cliente,
+    ubicacion: document.getElementById('no-ubicacion').value.trim(),
+    fecha_inicio: document.getElementById('no-inicio').value || null,
+    presupuesto: parseFloat(document.getElementById('no-presupuesto').value) || null,
+    estado: 'iniciando'
+  });
+  if (error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
+  closeModal();
+  showToast('Obra creada correctamente', 'success');
+  loadObras();
+  loadObrasSelect();
+  loadDashboard();
+}
+
+// =============================================
+// REPORTE DIARIO
+// =============================================
+document.getElementById('rpt-fecha').value = new Date().toISOString().split('T')[0];
+
+function updateKpi(el) {
+  el.parentElement.querySelector('.kpi-pts').textContent = el.value + '/10';
+  recalcKpi();
+}
+
+function recalcKpi() {
+  const plazo = parseInt(document.getElementById('kpi-plazo').value);
+  const calidad = parseInt(document.getElementById('kpi-calidad').value);
+  const mats = parseInt(document.getElementById('kpi-materiales').value);
+  const conf = parseInt(document.getElementById('kpi-conformidad').value);
+  const score = Math.round((plazo*40 + calidad*30 + mats*20 + conf*10) / 10);
+  document.getElementById('kpi-score').textContent = score;
+  const bar = document.getElementById('kpi-bar');
+  const nivel = document.getElementById('kpi-nivel');
+  bar.style.width = score + '%';
+  if (score >= 90) { bar.style.background='var(--green)'; nivel.textContent='Excelente → Bono 8%'; nivel.className='chip chip-green'; }
+  else if (score >= 75) { bar.style.background='var(--accent)'; nivel.textContent='Muy bueno → Bono 6%'; nivel.className='chip chip-blue'; }
+  else if (score >= 60) { bar.style.background='var(--amber)'; nivel.textContent='Aceptable → Bono 4%'; nivel.className='chip chip-amber'; }
+  else { bar.style.background='var(--red)'; nivel.textContent='Sin bono por ahora'; nivel.className='chip chip-red'; }
+}
+
+function addGastoRow() {
+  const d = document.createElement('div');
+  d.style.cssText = 'display:flex;gap:6px;align-items:center;margin-top:6px';
+  d.innerHTML = '<select class="form-select" style="flex:1.2"><option>Materiales</option><option>Herramientas</option><option>Combustible</option><option>Alimentos</option><option>Hospedaje</option><option>Otro</option></select><input type="text" class="form-input" placeholder="Descripción" style="flex:2"><input type="number" class="form-input" placeholder="$" style="flex:1;font-family:var(--mono)"><button onclick="this.parentElement.remove()" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0 4px">×</button>';
+  document.getElementById('gastos-list').appendChild(d);
+}
+
+async function enviarReporte() {
+  const obraId = document.getElementById('rpt-obra-id').value;
+  const fecha = document.getElementById('rpt-fecha').value;
+  if (!obraId || !fecha) { showToast('Completá obra y fecha', 'error'); return; }
+  if (!currentUsuario) { showToast('Error de sesión', 'error'); return; }
+
+  const plazo = parseInt(document.getElementById('kpi-plazo').value);
+  const calidad = parseInt(document.getElementById('kpi-calidad').value);
+  const mats = parseInt(document.getElementById('kpi-materiales').value);
+  const conf = parseInt(document.getElementById('kpi-conformidad').value);
+  const kpiTotal = Math.round((plazo*40 + calidad*30 + mats*20 + conf*10) / 10);
+  const bonoPct = kpiBono(kpiTotal);
+  const huboInc = document.getElementById('inconveniente-sel').value === 'si';
+
+  const btn = document.getElementById('btn-enviar-reporte');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Guardando...';
+
+  // Obtener geolocalización
+  let lat = null, lng = null;
+  if (navigator.geolocation) {
+    try {
+      const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000 }));
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+    } catch(e) {}
+  }
+
+  const avance = parseInt(document.getElementById('avance-slider').value);
+
+  const { data: reporte, error } = await db.from('reportes').insert({
+    obra_id: obraId,
+    encargado_id: currentUsuario.id,
+    fecha,
+    avance_dia: avance,
+    kpi_plazo: plazo,
+    kpi_calidad: calidad,
+    kpi_materiales: mats,
+    kpi_conformidad: conf,
+    kpi_total: kpiTotal,
+    bono_porcentaje: bonoPct,
+    hubo_inconveniente: huboInc,
+    descripcion_inconveniente: huboInc ? document.getElementById('rpt-inconveniente').value : null,
+    notas: document.getElementById('rpt-notas').value,
+    ubicacion_lat: lat,
+    ubicacion_lng: lng
+  }).select().single();
+
+  if (error) {
+    showToast('Error: ' + (error.code === '23505' ? 'Ya existe un reporte para esta obra y fecha' : error.message), 'error');
+    btn.disabled = false;
+    btn.textContent = 'Enviar reporte del día';
+    return;
+  }
+
+  // Guardar gastos
+  const filas = document.getElementById('gastos-list').querySelectorAll('div');
+  for (const fila of filas) {
+    const selects = fila.querySelectorAll('select');
+    const inputs = fila.querySelectorAll('input');
+    if (selects.length && inputs.length >= 2 && inputs[1].value) {
+      await db.from('gastos').insert({
+        reporte_id: reporte.id,
+        obra_id: obraId,
+        categoria: selects[0].value,
+        descripcion: inputs[0].value,
+        monto: parseFloat(inputs[1].value),
+        fecha,
+        registrado_por: currentUsuario.id
+      });
+    }
+  }
+
+  // Actualizar avance de la obra
+  await db.from('obras').update({ avance_total: avance }).eq('id', obraId);
+
+  btn.disabled = false;
+  btn.textContent = 'Enviar reporte del día';
+  showToast('Reporte guardado correctamente ✓', 'success');
+  loadReportesRecientes();
+  loadDashboard();
+}
+
+async function loadReportesRecientes() {
+  const { data } = await db.from('reportes').select('id, fecha, obras(nombre), usuarios(nombre), kpi_total').order('created_at', { ascending: false }).limit(5);
+  const el = document.getElementById('reportes-recientes');
+  if (!data?.length) { el.innerHTML = '<div class="empty-state">Sin reportes aún</div>'; return; }
+  el.innerHTML = data.map(r => `
+    <div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface2);border-radius:6px">
+      <div><div style="color:var(--text);font-weight:500">${r.obras?.nombre||'—'}</div><div style="color:var(--text3);font-size:11px">${fmtFecha(r.fecha)} · ${r.usuarios?.nombre||'—'}</div></div>
+      ${r.kpi_total ? kpiChip(r.kpi_total) : '<span class="chip chip-gray">—</span>'}
+    </div>`).join('');
+}
+
+// =============================================
+// TICKETS IA
+// =============================================
+let ticketData = null;
+
+async function loadTickets() {
+  const { data } = await db.from('gastos').select('*').order('created_at', { ascending: false }).limit(20);
+  const tbody = document.getElementById('tickets-tbody');
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No hay tickets registrados</td></tr>'; return; }
+  tbody.innerHTML = data.map(g => `
+    <tr>
+      <td>${fmtFecha(g.fecha)}</td>
+      <td class="td-main">${g.descripcion||'—'}</td>
+      <td><span class="chip chip-blue">${g.categoria||'—'}</span></td>
+      <td style="font-family:var(--mono);color:var(--green)">${fmtPeso(g.monto)}</td>
+    </tr>`).join('');
+}
+
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('preview-img').src = e.target.result;
+    document.getElementById('ticket-preview').style.display = 'block';
+    analyzeTicket(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeTicket(imageData) {
+  document.getElementById('ticket-loading').style.display = 'block';
+  document.getElementById('ticket-result').style.display = 'none';
+  const bar = document.getElementById('ai-progress');
+  bar.style.width = '0%';
+  setTimeout(() => bar.style.width = '60%', 100);
+  setTimeout(() => bar.style.width = '90%', 1200);
+  try {
+    const base64 = imageData.split(',')[1];
+    const mtype = imageData.split(';')[0].split(':')[1] || 'image/jpeg';
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: mtype, data: base64 } },
+          { type: 'text', text: 'Analizá este ticket o factura. Respondé SOLO con un JSON (sin backticks): {"comercio":"nombre","fecha":"dd/mm/yyyy","monto":"$X.XXX","categoria":"Materiales|Combustible|Herramientas|Alimentos|Hospedaje|Otro","monto_numero":NUMERO}. Si no podés leer un dato usá "No detectado" o 0.' }
+        ]}]
+      })
+    });
+    const data = await res.json();
+    const txt = (data.content||[]).map(c=>c.text||'').join('');
+    try { ticketData = JSON.parse(txt.replace(/```json|```/g,'').trim()); }
+    catch { ticketData = { comercio:'No detectado', fecha:'No detectado', monto:'No detectado', categoria:'Otro', monto_numero:0 }; }
+    bar.style.width = '100%';
+    setTimeout(() => {
+      document.getElementById('ticket-loading').style.display = 'none';
+      document.getElementById('tr-comercio').textContent = ticketData.comercio;
+      document.getElementById('tr-fecha-ticket').textContent = ticketData.fecha;
+      document.getElementById('tr-monto').textContent = ticketData.monto;
+      document.getElementById('tr-cat').textContent = ticketData.categoria;
+      const sel = document.getElementById('ticket-cat-confirm');
+      for (let i=0; i<sel.options.length; i++) {
+        if (sel.options[i].value === ticketData.categoria) { sel.selectedIndex = i; break; }
+      }
+      document.getElementById('ticket-result').style.display = 'block';
+    }, 300);
+  } catch(e) {
+    bar.style.width = '100%';
+    setTimeout(() => {
+      document.getElementById('ticket-loading').style.display = 'none';
+      document.getElementById('tr-comercio').textContent = 'Error al conectar con IA';
+      document.getElementById('ticket-result').style.display = 'block';
+    }, 300);
+  }
+}
+
+async function confirmarTicket() {
+  if (!ticketData || !currentUsuario) return;
+  const cat = document.getElementById('ticket-cat-confirm').value;
+  const { error } = await db.from('gastos').insert({
+    categoria: cat,
+    descripcion: ticketData.comercio,
+    monto: ticketData.monto_numero || 0,
+    fecha: new Date().toISOString().split('T')[0],
+    registrado_por: currentUsuario.id
+  });
+  if (error) { showToast('Error al guardar ticket', 'error'); return; }
+  showToast('Ticket guardado correctamente ✓', 'success');
+  loadTickets();
+  document.getElementById('ticket-result').style.display = 'none';
+  document.getElementById('ticket-preview').style.display = 'none';
+  ticketData = null;
+}
+
+// =============================================
+// FINANCIERO
+// =============================================
+async function loadFinanciero() {
+  const { data: obras } = await db.from('obras').select('*').in('estado', ['en_curso','demorada','iniciando']);
+  const presupuesto = obras?.reduce((a,o) => a + (o.presupuesto||0), 0) || 0;
+  document.getElementById('fin-presupuesto').textContent = fmtPeso(presupuesto);
+  document.getElementById('fin-obras').textContent = obras?.length ?? 0;
+
+  const { data: gastos } = await db.from('gastos').select('monto, categoria');
+  const totalGastos = gastos?.reduce((a,g) => a + (g.monto||0), 0) || 0;
+  document.getElementById('fin-gastos').textContent = fmtPeso(totalGastos);
+
+  const { data: vias } = await db.from('viaticos').select('monto_anticipado');
+  const totalVias = vias?.reduce((a,v) => a + (v.monto_anticipado||0), 0) || 0;
+  document.getElementById('fin-viaticos').textContent = fmtPeso(totalVias);
+
+  // Rentabilidad por obra
+  const rentEl = document.getElementById('fin-rentabilidad');
+  if (!obras?.length) { rentEl.innerHTML = '<div class="empty-state">Sin datos</div>'; }
+  else {
+    rentEl.innerHTML = obras.map(o => {
+      const gastosObra = gastos?.filter(g => g.obra_id === o.id).reduce((a,g) => a+(g.monto||0), 0) || 0;
+      const margen = o.presupuesto ? Math.round((1 - gastosObra/o.presupuesto)*100) : null;
+      return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:8px;background:var(--surface2);border-radius:6px;margin-bottom:6px">
+        <span style="color:var(--text2)">${o.nombre}</span>
+        <span style="font-family:var(--mono);color:${margen > 30 ? 'var(--green)' : margen > 15 ? 'var(--amber)' : 'var(--text3)'}">${margen !== null ? margen+'%' : 'En curso'}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Por categoría
+  const catEl = document.getElementById('fin-categorias');
+  if (!gastos?.length) { catEl.innerHTML = '<div class="empty-state">Sin gastos registrados</div>'; }
+  else {
+    const byCat = {};
+    gastos.forEach(g => { byCat[g.categoria||'Otro'] = (byCat[g.categoria||'Otro']||0) + (g.monto||0); });
+    catEl.innerHTML = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat, monto]) => `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--text2)">${cat}</span><span style="font-family:var(--mono);color:var(--text)">${fmtPeso(monto)}</span>
+        </div>
+        <div class="progress" style="margin-top:0"><div class="progress-fill" style="width:${Math.round(monto/totalGastos*100)}%;background:var(--accent)"></div></div>
+      </div>`).join('');
+  }
+}
+
+// =============================================
+// VIÁTICOS
+// =============================================
+async function loadViaticos() {
+  const { data } = await db.from('viaticos').select('*, empleado:usuarios(nombre), obra:obras(nombre)').order('created_at', { ascending: false });
+
+  const total = data?.reduce((a,v) => a+(v.monto_anticipado||0), 0) || 0;
+  const rendido = data?.reduce((a,v) => a+(v.monto_rendido||0), 0) || 0;
+  document.getElementById('via-total').textContent = fmtPeso(total);
+  document.getElementById('via-rendido').textContent = fmtPeso(rendido);
+  document.getElementById('via-pendiente').textContent = fmtPeso(total - rendido);
+
+  const tbody = document.getElementById('viaticos-tbody');
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay viáticos registrados</td></tr>'; return; }
+  tbody.innerHTML = data.map(v => {
+    const diff = (v.monto_anticipado||0) - (v.monto_rendido||0);
+    const chipMap = { rendido:'chip-green', parcial:'chip-amber', pendiente:'chip-red' };
+    return `<tr>
+      <td class="td-main">${v.empleado?.nombre||'—'}</td>
+      <td>${v.obra?.nombre||'—'}</td>
+      <td style="font-family:var(--mono)">${fmtPeso(v.monto_anticipado)}</td>
+      <td style="font-family:var(--mono)">${fmtPeso(v.monto_rendido)}</td>
+      <td style="font-family:var(--mono);color:${diff>0?'var(--red)':diff<0?'var(--amber)':'var(--green)'}">${diff===0?'$0':fmtPeso(Math.abs(diff))}</td>
+      <td><span class="chip ${chipMap[v.estado]||'chip-gray'}">${v.estado}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function openNuevoViatico() {
+  const { data: usuarios } = await db.from('usuarios').select('id, nombre').eq('activo', true);
+  const { data: obras } = await db.from('obras').select('id, nombre').in('estado', ['en_curso','demorada','iniciando']);
+  document.getElementById('modal-title').textContent = 'Nuevo anticipo de viáticos';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label class="form-label">Empleado</label>
+      <select class="form-input" id="nv-emp">${usuarios?.map(u=>`<option value="${u.id}">${u.nombre}</option>`).join('')||''}</select></div>
+    <div class="form-group"><label class="form-label">Obra</label>
+      <select class="form-input" id="nv-obra">${obras?.map(o=>`<option value="${o.id}">${o.nombre}</option>`).join('')||''}</select></div>
+    <div class="form-group"><label class="form-label">Monto anticipado ($)</label>
+      <input type="number" class="form-input" id="nv-monto" placeholder="0" style="font-family:var(--mono)"></div>`;
+  document.getElementById('modal-footer').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarViatico()">Guardar</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+async function guardarViatico() {
+  const monto = parseFloat(document.getElementById('nv-monto').value);
+  if (!monto) { showToast('Ingresá un monto', 'error'); return; }
+  const now = new Date();
+  const { error } = await db.from('viaticos').insert({
+    empleado_id: document.getElementById('nv-emp').value,
+    obra_id: document.getElementById('nv-obra').value,
+    monto_anticipado: monto,
+    mes: now.getMonth() + 1,
+    anio: now.getFullYear()
+  });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  closeModal();
+  showToast('Anticipo registrado ✓', 'success');
+  loadViaticos();
+}
+
+// =============================================
+// COMISIONES
+// =============================================
+async function loadComisiones() {
+  const { data } = await db.from('reportes').select('id, fecha, kpi_total, bono_porcentaje, obras(nombre), usuarios(nombre)').order('created_at', { ascending: false }).limit(30);
+  const tbody = document.getElementById('comisiones-tbody');
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin reportes aún</td></tr>'; return; }
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td class="td-main">${r.usuarios?.nombre||'—'}</td>
+      <td>${r.obras?.nombre||'—'}</td>
+      <td>${fmtFecha(r.fecha)}</td>
+      <td style="font-family:var(--mono)">${r.kpi_total??'—'}</td>
+      <td>${r.kpi_total ? kpiChip(r.kpi_total) : '—'}</td>
+      <td style="font-family:var(--mono);color:var(--green)">${r.bono_porcentaje ? r.bono_porcentaje+'%' : '—'}</td>
+    </tr>`).join('');
+}
+
+// =============================================
+// UTILS
+// =============================================
+function showModal(title, body) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal-footer').innerHTML = '<button class="btn btn-primary" onclick="closeModal()">Cerrar</button>';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// Cargar obras cuando se navega a esa sección
+document.querySelector('[onclick*="obras"]').addEventListener('click', loadObras);
+</script>
+</body>
+</html>
