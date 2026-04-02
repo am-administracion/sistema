@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AM Soluciones — Sistema de Gestión</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #0a0c10;
+  --surface: #111318;
+  --surface2: #181c24;
+  --surface3: #1f2430;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.11);
+  --accent: #3b82f6;
+  --accent2: #6366f1;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --text: #eef2f7;
+  --text2: #8b96a8;
+  --text3: #424d5e;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --display: 'Syne', sans-serif;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* ===== LOGIN ===== */
+#login-screen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--bg); padding: 20px; position: relative; overflow: hidden;
+}
+#login-screen::before {
+  content: ''; position: absolute; top: -200px; left: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+#login-screen::after {
+  content: ''; position: absolute; bottom: -200px; right: -200px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.login-card {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 44px; width: 100%; max-width: 420px;
+  position: relative; z-index: 1;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+}
+.login-logo { display: flex; align-items: center; gap: 14px; margin-bottom: 36px; }
+.login-logo-icon {
+  width: 48px; height: 48px; background: var(--accent);
+  border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 17px; color: #fff; font-family: var(--display);
+  box-shadow: 0 8px 24px rgba(59,130,246,0.3);
+}
+.login-logo-name { font-family: var(--display); font-size: 19px; font-weight: 700; }
+.login-logo-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.login-title { font-family: var(--display); font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+.login-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; line-height: 1.5; }
+.login-field { margin-bottom: 14px; }
+.login-field label { display: block; font-size: 11px; font-weight: 500; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+.login-field input {
+  width: 100%; padding: 12px 14px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text); font-size: 14px; font-family: var(--sans);
+  transition: border 0.15s, box-shadow 0.15s;
+}
+.login-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.login-btn {
+  width: 100%; padding: 13px; background: var(--accent);
+  border: none; border-radius: 10px; color: #fff;
+  font-size: 14px; font-weight: 600; font-family: var(--display);
+  cursor: pointer; transition: all 0.15s; margin-top: 8px;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.25);
+}
+.login-btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,0.35); }
+.login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.login-error {
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #f87171;
+  margin-top: 12px; display: none;
+}
+.login-footer { font-size: 11px; color: var(--text3); text-align: center; margin-top: 24px; }
+
+/* ===== APP ===== */
+#app-screen { display: none; }
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 224px; flex-shrink: 0; background: var(--surface);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+}
+.sidebar-logo { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
+.logo-mark { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #fff; font-family: var(--display); }
+.logo-text { font-family: var(--display); font-size: 14px; font-weight: 700; }
+.logo-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.nav { padding: 10px 8px; flex: 1; overflow-y: auto; }
+.nav-section { font-size: 10px; font-weight: 500; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 10px 4px; }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--text2); font-size: 13px; transition: all 0.15s; margin-bottom: 1px; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(59,130,246,0.12); color: var(--accent); font-weight: 500; }
+.nav-icon { width: 16px; height: 16px; opacity: 0.6; flex-shrink: 0; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-item.nav-special { color: var(--amber); }
+.nav-item.nav-special:hover, .nav-item.nav-special.active { background: rgba(245,158,11,0.1); color: var(--amber); }
+.nav-item.nav-special .nav-icon { opacity: 0.8; }
+.sidebar-footer { padding: 10px 8px; border-top: 1px solid var(--border); }
+.user-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; justify-content: space-between; }
+.user-row:hover { background: var(--surface2); }
+.user-info { display: flex; align-items: center; gap: 8px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; flex-shrink: 0; font-family: var(--display); }
+.user-name { font-size: 12px; font-weight: 500; }
+.user-role { font-size: 10px; color: var(--text3); }
+.logout-btn { font-size: 11px; color: var(--text3); cursor: pointer; padding: 4px; border-radius: 4px; }
+.logout-btn:hover { color: var(--red); }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: 54px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; background: var(--surface); }
+.topbar-title { font-family: var(--display); font-size: 15px; font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.badge-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.pill-green { background: rgba(16,185,129,0.12); color: var(--green); }
+.pill-amber { background: rgba(245,158,11,0.12); color: var(--amber); }
+.pill-red { background: rgba(239,68,68,0.12); color: var(--red); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; font-family: var(--sans); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #2563eb; }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.content { flex: 1; overflow-y: auto; padding: 22px; }
+
+/* SECTIONS */
+.section { display: none; }
+.section.active { display: block; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+
+/* GRIDS */
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
+.grid-21 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+.grid-12 { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; }
+
+/* KPI CARD */
+.kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; position: relative; overflow: hidden; }
+.kpi-label { font-size: 10px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+.kpi-value { font-size: 26px; font-weight: 700; color: var(--text); font-family: var(--mono); line-height: 1; }
+.kpi-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
+.kpi-trend { font-size: 11px; font-weight: 500; margin-top: 6px; }
+.kpi-trend.up { color: var(--green); }
+.kpi-trend.down { color: var(--red); }
+.kpi-accent { position: absolute; top: 0; left: 0; width: 100%; height: 2px; }
+
+/* PROGRESS */
+.progress { height: 4px; background: var(--surface3); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+.progress-fill { height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.015); }
+.td-main { color: var(--text); font-weight: 500; }
+
+/* FORM */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 11px; color: var(--text2); margin-bottom: 5px; display: block; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 9px 12px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-size: 13px; font-family: var(--sans); transition: border 0.15s; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-select { appearance: none; }
+
+/* CHIPS */
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.chip-green { background: rgba(16,185,129,0.12); color: #34d399; }
+.chip-amber { background: rgba(245,158,11,0.12); color: #fbbf24; }
+.chip-red { background: rgba(239,68,68,0.12); color: #f87171; }
+.chip-blue { background: rgba(59,130,246,0.12); color: #60a5fa; }
+.chip-purple { background: rgba(99,102,241,0.12); color: #a5b4fc; }
+.chip-gray { background: rgba(148,163,184,0.1); color: #94a3b8; }
+
+/* SECTION HEADER */
+.section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-hdr h2 { font-family: var(--display); font-size: 16px; font-weight: 700; color: var(--text); }
+.section-hdr p { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 28px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-family: var(--display); font-size: 18px; font-weight: 700; margin-bottom: 18px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 18px; font-size: 13px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 200; transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: rgba(16,185,129,0.3); }
+.toast.error { border-color: rgba(239,68,68,0.3); }
+
+/* SPINNER */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.15); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { text-align: center; padding: 32px 20px; color: var(--text3); font-size: 13px; }
+.empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+/* ===== KANBAN ===== */
+.kanban-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; min-height: 500px; }
+.kanban-col { flex-shrink: 0; width: 240px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); display: flex; flex-direction: column; }
+.kanban-col-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+.kanban-col-title { font-family: var(--display); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.kanban-col-count { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.kanban-col-top { width: 100%; height: 3px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.kanban-cards { padding: 10px; flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.kanban-card {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; cursor: pointer; transition: all 0.15s;
+}
+.kanban-card:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.kanban-card-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.kanban-card-client { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
+.kanban-card-footer { display: flex; align-items: center; justify-content: space-between; }
+.kanban-card-amount { font-family: var(--mono); font-size: 11px; color: var(--text2); }
+.kanban-add { margin: 8px 10px 10px; padding: 8px; border: 1px dashed var(--border2); border-radius: 8px; text-align: center; cursor: pointer; font-size: 12px; color: var(--text3); transition: all 0.15s; }
+.kanban-add:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.04); }
+
+/* ===== OBRA DETAIL MODAL ===== */
+.obra-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.obra-detail-item { background: var(--surface2); border-radius: 8px; padding: 10px 12px; }
+.obra-detail-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.obra-detail-value { font-size: 14px; font-weight: 500; color: var(--text); }
+.obra-timeline { display: flex; flex-direction: column; gap: 0; }
+.timeline-step { display: flex; gap: 12px; padding-bottom: 16px; position: relative; }
+.timeline-step:last-child { padding-bottom: 0; }
+.timeline-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.timeline-line { position: absolute; left: 4px; top: 14px; bottom: 0; width: 2px; background: var(--border); }
+.timeline-step:last-child .timeline-line { display: none; }
+.timeline-label { font-size: 12px; font-weight: 500; color: var(--text); }
+.timeline-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* ===== DASHBOARD ARIEL ===== */
+.semaforo-card {
+  border-radius: var(--radius-lg); padding: 28px; margin-bottom: 16px;
+  position: relative; overflow: hidden;
+}
+.semaforo-verde { background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05)); border: 1px solid rgba(16,185,129,0.25); }
+.semaforo-amarillo { background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.25); }
+.semaforo-rojo { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05)); border: 1px solid rgba(239,68,68,0.25); }
+.semaforo-icon { font-size: 40px; margin-bottom: 10px; }
+.semaforo-estado { font-family: var(--display); font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.semaforo-sub { font-size: 13px; color: var(--text2); }
+.flujo-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.flujo-item:last-child { border-bottom: none; }
+.flujo-label { font-size: 13px; color: var(--text2); }
+.flujo-fecha { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.flujo-amount { font-family: var(--mono); font-weight: 600; font-size: 14px; }
+.flujo-in { color: var(--green); }
+.flujo-out { color: var(--red); }
+.flujo-pending { color: var(--amber); }
+.bolsa-empresa { background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.04)); border: 1px solid rgba(59,130,246,0.2); border-radius: var(--radius-lg); padding: 20px; }
+.bolsa-familia { background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(99,102,241,0.04)); border: 1px solid rgba(99,102,241,0.2); border-radius: var(--radius-lg); padding: 20px; }
+.bolsa-title { font-family: var(--display); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+
+/* ===== REPORTE DIARIO MEJORADO ===== */
+.produccion-item { background: var(--surface2); border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; }
+.produccion-num { font-family: var(--mono); font-size: 11px; color: var(--text3); background: var(--surface3); border-radius: 4px; padding: 2px 6px; flex-shrink: 0; margin-top: 1px; }
+.upload-zone { border: 2px dashed var(--border2); border-radius: var(--radius); padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.upload-zone:hover { border-color: var(--accent); background: rgba(59,130,246,0.04); }
+.foto-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 10px; }
+.foto-thumb { aspect-ratio: 1; border-radius: 6px; overflow: hidden; background: var(--surface3); position: relative; }
+.foto-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+/* DRAG AND DROP */
+.kanban-card.dragging { opacity: 0.4; transform: rotate(2deg); }
+.kanban-col.drag-over .kanban-cards { background: rgba(59,130,246,0.06); border-radius: 8px; }
+.kanban-card { cursor: grab; }
+.kanban-card:active { cursor: grabbing; }
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .sidebar { width: 56px; }
+  .logo-text, .logo-sub, .nav-label, .nav-section, .user-name, .user-role, .logout-btn { display: none; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .nav-icon { opacity: 1; width: 18px; height: 18px; }
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .grid-21, .grid-12 { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .content { padding: 14px; }
+  .kanban-board { padding-bottom: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">AM</div>
+      <div>
+        <div class="login-logo-name">AM Soluciones</div>
+        <div class="login-logo-sub">Sistema de Gestión Interno</div>
+      </div>
+    </div>
+    <div class="login-title">Bienvenido</div>
+    <div class="login-sub">Ingresá con tu email y contraseña para acceder al sistema.</div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="tu@amsoluciones.com.ar" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Ingresar al sistema</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-footer">AM Soluciones Integrales SRL · Córdoba, Argentina · Desde 1998</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">AM</div>
+        <div><div class="logo-text">AM Soluciones</div><div class="logo-sub">Gestión</div></div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" onclick="navigate('dashboard',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+        <span class="nav-label">Dashboard</span>
+      </div>
+      <div class="nav-item nav-special" onclick="navigate('ariel',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+        <span class="nav-label">Vista Ariel</span>
+      </div>
+      <div class="nav-section">Obras</div>
+      <div class="nav-item" onclick="navigate('kanban',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="4" height="10" rx="1"/><rect x="6" y="3" width="4" height="7" rx="1"/><rect x="11" y="3" width="4" height="12" rx="1"/></svg>
+        <span class="nav-label">Tablero obras</span>
+      </div>
+      <div class="nav-item" onclick="navigate('reporte',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M6 6h4M6 9h4M6 12h2"/></svg>
+        <span class="nav-label">Reporte diario</span>
+      </div>
+      <div class="nav-section">Gestión</div>
+      <div class="nav-item" onclick="navigate('financiero',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/></svg>
+        <span class="nav-label">Finanzas</span>
+      </div>
+      <div class="nav-item" onclick="navigate('comisiones',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M6 7h4M6 9h4"/></svg>
+        <span class="nav-label">Comisiones</span>
+      </div>
+      <div class="nav-item" onclick="navigate('viaticos',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2C5.8 2 4 3.8 4 6c0 3 4 8 4 8s4-5 4-8c0-2.2-1.8-4-4-4z"/><circle cx="8" cy="6" r="1.5"/></svg>
+        <span class="nav-label">Viáticos</span>
+      </div>
+      <div class="nav-item" onclick="navigate('tickets',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="9" rx="1.5"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg>
+        <span class="nav-label">Tickets IA</span>
+      </div>
+      <div class="nav-item" onclick="navigate('admin',this)">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l1.8 3.6L14 5.5l-3 2.9.7 4.1L8 10.4l-3.7 2.1.7-4.1-3-2.9 4.2-.9z"/></svg>
+        <span class="nav-label">Administración</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-row">
+        <div class="user-info">
+          <div class="avatar" id="sidebar-avatar">AP</div>
+          <div><div class="user-name" id="sidebar-name">—</div><div class="user-role" id="sidebar-role">—</div></div>
+        </div>
+        <div class="logout-btn" onclick="doLogout()" title="Salir">✕</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <span class="badge-pill pill-green"><span class="dot"></span>Sistema activo</span>
+        <button class="btn btn-ghost btn-sm" onclick="navigate('reporte',document.querySelector('[onclick*=reporte]'))">+ Reporte</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== DASHBOARD GENERAL ===== -->
+      <div class="section active" id="sec-dashboard">
+        <div class="grid-4" style="margin-bottom:14px">
+          <div class="kpi-card">
+            <div class="kpi-accent" style="background:linear-gradient(90deg,var(--green),transparent)"></div>
+            <div class="kpi-label">Obras activas</div>
+            <div class="kpi-value" id="dash-obras">—</div>
+            <div class="kpi-sub" id="dash-obras-sub">cargando...</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-accent" style="background:linear-gradient(90deg,var(--accent),transparent)"></div>
+            <div class="kpi-label">Reportes hoy</div>
+            <div class="kpi-value" id="dash-rep-hoy">—</div>
+            <div class="kpi-sub">de campo</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-accent" style="background:linear-gradient(90deg,var(--amber),transparent)"></div>
+            <div class="kpi-label">KPI promedio</div>
+            <div class="kpi-value" id="dash-kpi">—</div>
+            <div class="kpi-sub">últimos reportes</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-accent" style="background:linear-gradient(90deg,var(--red),transparent)"></div>
+            <div class="kpi-label">Viáticos pendientes</div>
+            <div class="kpi-value" id="dash-via">—</div>
+            <div class="kpi-sub">sin rendir</div>
+          </div>
+        </div>
+        <div class="grid-21">
+          <div class="card">
+            <div class="section-hdr"><div><h2>Obras en curso</h2><p>Estado y avance actual</p></div><button class="btn btn-ghost btn-sm" onclick="navigate('kanban',document.querySelector('[onclick*=kanban]'))">Ver tablero →</button></div>
+            <div id="dash-obras-list"><div class="empty-state"><div class="spinner"></div></div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="card">
+              <div class="section-hdr"><div><h2>Alertas</h2></div></div>
+              <div id="dash-alertas"><div class="empty-state"><div class="spinner"></div></div></div>
+            </div>
+            <div class="card">
+              <div class="section-hdr"><div><h2>Últimos reportes</h2></div></div>
+              <div id="dash-ult-rep"><div class="empty-state"><div class="spinner"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== VISTA ARIEL ===== -->
+      <div class="section" id="sec-ariel">
+        <div style="margin-bottom:16px">
+          <div style="font-family:var(--display);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:4px">Panel de Ariel</div>
+          <div style="font-family:var(--display);font-size:22px;font-weight:700">¿Cómo estamos hoy?</div>
+        </div>
+
+        <!-- Semáforo -->
+        <div id="semaforo-container" style="margin-bottom:16px">
+          <div class="semaforo-card semaforo-verde">
+            <div class="semaforo-icon">🟢</div>
+            <div class="semaforo-estado">Estamos bien</div>
+            <div class="semaforo-sub">La caja está positiva. Hay más por cobrar que por pagar en los próximos 30 días.</div>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="kpi-card" style="border-color:rgba(16,185,129,0.2)">
+            <div class="kpi-accent" style="background:var(--green)"></div>
+            <div class="kpi-label">Disponible ahora</div>
+            <div class="kpi-value" style="color:var(--green)" id="ariel-disponible">—</div>
+            <div class="kpi-sub">en cuentas operativas</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-accent" style="background:var(--accent)"></div>
+            <div class="kpi-label">Por cobrar (30d)</div>
+            <div class="kpi-value" id="ariel-cobrar">—</div>
+            <div class="kpi-sub" id="ariel-cobrar-sub">facturas pendientes</div>
+          </div>
+          <div class="kpi-card" style="border-color:rgba(239,68,68,0.2)">
+            <div class="kpi-accent" style="background:var(--red)"></div>
+            <div class="kpi-label">Por pagar (30d)</div>
+            <div class="kpi-value" style="color:var(--red)" id="ariel-pagar">—</div>
+            <div class="kpi-sub" id="ariel-pagar-sub">proveedores + sueldos</div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <!-- Bolsa Empresa -->
+          <div class="bolsa-empresa">
+            <div class="bolsa-title" style="color:#60a5fa">🏢 Gastos empresa este mes</div>
+            <div id="bolsa-empresa-items">
+              <div class="flujo-item"><div><div class="flujo-label">Depósito / alquiler</div></div><div class="flujo-amount flujo-out">-$630.000</div></div>
+              <div class="flujo-item"><div><div class="flujo-label">Luz oficina</div></div><div class="flujo-amount flujo-out">-$15.000</div></div>
+              <div class="flujo-item"><div><div class="flujo-label">Sueldos (5 empleados)</div></div><div class="flujo-amount flujo-out" id="bolsa-sueldos">-$—</div></div>
+              <div class="flujo-item"><div><div class="flujo-label">Nafta autos empresa</div></div><div class="flujo-amount flujo-out">-$—</div></div>
+              <div class="flujo-item"><div><div class="flujo-label">Materiales obras</div></div><div class="flujo-amount flujo-out" id="bolsa-materiales">-$—</div></div>
+              <div class="flujo-item" style="border-top:1px solid rgba(59,130,246,0.2);margin-top:4px;padding-top:12px"><div><div style="font-weight:600;color:var(--text)">Total empresa</div></div><div class="flujo-amount flujo-out" id="bolsa-empresa-total" style="font-size:16px">-$—</div></div>
+            </div>
+          </div>
+          <!-- Bolsa Familia -->
+          <div class="bolsa-familia">
+            <div class="bolsa-title" style="color:#a5b4fc">🏠 Gastos familia este mes</div>
+            <div id="bolsa-familia-items">
+              <div class="flujo-item"><div><div class="flujo-label">Supermercado / comida</div></div><div class="flujo-amount flujo-out">-$—</div></div>
+              <div class="flujo-item"><div><div class="flujo-label">Servicios casa (luz/gas/agua)</div></div><div class="flujo-amount flujo-out">-$—</div></div>
+              <div class="flujo-item"><div><div class="flujo-label">Expensas</div></div><div class="flujo-amount flujo-out">-$—</div></div>
+              <div class="flujo-item"><div><div class="flujo-label">Nafta autos particulares</div></div><div class="flujo-amount flujo-out">-$—</div></div>
+              <div class="flujo-item"><div><div class="flujo-label">Municipalidad autos</div></div><div class="flujo-amount flujo-out">-$—</div></div>
+              <div class="flujo-item" style="border-top:1px solid rgba(99,102,241,0.2);margin-top:4px;padding-top:12px"><div><div style="font-weight:600;color:var(--text)">Total familia</div></div><div class="flujo-amount flujo-out" style="font-size:16px">-$—</div></div>
+            </div>
+            <div style="margin-top:12px;padding:10px;background:rgba(99,102,241,0.08);border-radius:8px;font-size:11px;color:var(--text3);line-height:1.5">
+              💡 <strong style="color:var(--text2)">Tip:</strong> Estos gastos deberían salir de una cuenta separada. Definir un retiro mensual fijo para Ariel y la familia simplifica todo.
+            </div>
+          </div>
+        </div>
+
+        <!-- Próximos vencimientos -->
+        <div class="card">
+          <div class="section-hdr"><div><h2>Próximos 30 días</h2><p>Lo que entra y lo que sale</p></div><button class="btn btn-ghost btn-sm" onclick="openNuevoMovimiento()">+ Cargar movimiento</button></div>
+          <div id="ariel-flujo"><div class="empty-state"><div class="spinner"></div></div></div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text2)">Posición proyectada</span>
+            <span style="font-family:var(--mono);font-size:18px;font-weight:700" id="ariel-posicion">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== KANBAN ===== -->
+      <div class="section" id="sec-kanban">
+        <div class="section-hdr">
+          <div><h2>Tablero de obras</h2><p>Seguimiento por etapa del proceso</p></div>
+          <button class="btn btn-primary btn-sm" onclick="openNuevaObra()">+ Nueva obra</button>
+        </div>
+        <div class="kanban-board" id="kanban-board">
+          <div class="empty-state" style="width:100%"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ===== REPORTE DIARIO ===== -->
+      <div class="section" id="sec-reporte">
+        <div class="section-hdr"><div><h2>Reporte diario</h2><p>Completá al final de cada jornada</p></div></div>
+        <div class="grid-21">
+          <div class="card">
+            <div class="form-group">
+              <label class="form-label">Obra</label>
+              <select class="form-select" id="rpt-obra-id"></select>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Fecha</label>
+                <input type="date" class="form-input" id="rpt-fecha">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Responsable en campo</label>
+                <select class="form-select" id="rpt-responsable"></select>
+              </div>
+            </div>
+
+            <!-- PRODUCCIÓN REAL -->
+            <div class="form-group">
+              <label class="form-label">¿Qué se hizo hoy? (producción real)</label>
+              <div id="produccion-list" style="display:flex;flex-direction:column;gap:8px">
+                <div class="produccion-item">
+                  <span class="produccion-num">#1</span>
+                  <div style="flex:1">
+                    <input type="text" class="form-input" placeholder="Ej: Instalación cámaras PTZ — 3 unidades" style="margin-bottom:6px">
+                    <div style="display:flex;gap:6px">
+                      <input type="number" class="form-input" placeholder="Cant. prevista" style="flex:1;font-family:var(--mono)">
+                      <input type="number" class="form-input" placeholder="Cant. realizada" style="flex:1;font-family:var(--mono)">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addProduccionRow()">+ Agregar tarea</button>
+            </div>
+
+            <!-- FOTOS -->
+            <div class="form-group">
+              <label class="form-label">Fotos del trabajo realizado</label>
+              <div class="upload-zone" onclick="document.getElementById('fotos-input').click()">
+                <input type="file" id="fotos-input" accept="image/*" multiple style="display:none" onchange="handleFotos(this)">
+                <div style="font-size:22px;margin-bottom:6px">📷</div>
+                <div style="font-size:13px;color:var(--text2)">Subí las fotos de lo que se hizo</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Múltiples fotos · Cámara o galería</div>
+              </div>
+              <div class="foto-grid" id="foto-grid"></div>
+            </div>
+
+            <!-- GASTOS -->
+            <div class="form-group">
+              <label class="form-label">Gastos del día</label>
+              <div style="display:flex;flex-direction:column;gap:6px" id="gastos-list">
+                <div style="display:flex;gap:6px;align-items:center">
+                  <select class="form-select" style="flex:1.2"><option>Materiales</option><option>Herramientas</option><option>Combustible</option><option>Alimentos</option><option>Hospedaje</option><option>Otro</option></select>
+                  <input type="text" class="form-input" placeholder="Descripción" style="flex:2">
+                  <input type="number" class="form-input" placeholder="$" style="flex:1;font-family:var(--mono)">
+                </div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addGastoRow()">+ Agregar gasto</button>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">¿Hubo algún inconveniente?</label>
+              <select class="form-select" id="inconveniente-sel" onchange="document.getElementById('inconveniente-box').style.display=this.value==='si'?'block':'none'">
+                <option value="no">No, jornada normal</option>
+                <option value="si">Sí — detallar</option>
+              </select>
+            </div>
+            <div class="form-group" id="inconveniente-box" style="display:none">
+              <textarea class="form-textarea" id="rpt-inconveniente" placeholder="¿Qué pasó? ¿Cómo se resolvió? ¿Qué se necesita?"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notas para mañana</label>
+              <textarea class="form-textarea" id="rpt-notas" placeholder="Materiales que faltan, coordinación, acceso al cliente..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%" id="btn-enviar" onclick="enviarReporte()">Enviar reporte del día</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <!-- Info obra seleccionada -->
+            <div class="card" id="obra-info-panel">
+              <div class="kpi-label" style="margin-bottom:10px">Obra seleccionada</div>
+              <div id="obra-info-content" style="font-size:12px;color:var(--text3)">Seleccioná una obra</div>
+            </div>
+            <div class="card">
+              <div class="section-hdr"><div><h2>Reportes recientes</h2></div></div>
+              <div id="reportes-recientes" style="font-size:12px;display:flex;flex-direction:column;gap:6px">
+                <div class="empty-state"><div class="spinner"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FINANZAS ===== -->
+      <div class="section" id="sec-financiero">
+        <div class="section-hdr"><div><h2>Estado financiero</h2><p>Presupuesto vs real por obra</p></div></div>
+        <div class="grid-4" style="margin-bottom:14px">
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--green)"></div><div class="kpi-label">Presupuesto total</div><div class="kpi-value" id="fin-presup">—</div><div class="kpi-sub">obras activas</div></div>
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--red)"></div><div class="kpi-label">Gastos registrados</div><div class="kpi-value" id="fin-gastos">—</div><div class="kpi-sub">este mes</div></div>
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--amber)"></div><div class="kpi-label">Viáticos anticipados</div><div class="kpi-value" id="fin-via">—</div><div class="kpi-sub">mes actual</div></div>
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--green)"></div><div class="kpi-label">Obras activas</div><div class="kpi-value" id="fin-obras">—</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-hdr"><div><h2>Presupuesto vs Real por obra</h2></div></div>
+            <div id="fin-pvsr"><div class="empty-state"><div class="spinner"></div></div></div>
+          </div>
+          <div class="card">
+            <div class="section-hdr"><div><h2>Gastos por categoría</h2></div></div>
+            <div id="fin-cats"><div class="empty-state"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== COMISIONES ===== -->
+      <div class="section" id="sec-comisiones">
+        <div class="section-hdr"><div><h2>Comisiones e incentivos</h2><p>Basado en producción real reportada</p></div></div>
+        <div style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.15);border-radius:var(--radius);padding:14px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.6">
+          <strong style="color:var(--text)">¿Cómo se calcula el bono?</strong> El puntaje KPI lo asigna Ana Paula o Ariel al revisar cada reporte — no el encargado. Se basa en: producción real vs prevista (40%), fotos y documentación subidas (30%), gastos dentro del presupuesto (20%), sin inconvenientes graves (10%). Bono del 3% al 8% sobre el valor de la obra.
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Encargado</th><th>Obra</th><th>Fecha</th><th>Producción</th><th>KPI</th><th>Bono</th></tr></thead>
+              <tbody id="comisiones-tbody"><tr><td colspan="6" class="empty-state"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== VIÁTICOS ===== -->
+      <div class="section" id="sec-viaticos">
+        <div class="section-hdr">
+          <div><h2>Control de viáticos</h2><p>Anticipos y rendiciones</p></div>
+          <button class="btn btn-primary btn-sm" onclick="openNuevoViatico()">+ Nuevo anticipo</button>
+        </div>
+        <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.15);border-radius:var(--radius);padding:14px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.6">
+          <strong style="color:var(--text)">Política de viáticos AM Soluciones:</strong> Se anticipa según destino y duración. El empleado rinde con comprobantes (tickets, facturas). Lo que no se rinde con comprobante se descuenta del próximo anticipo. Objetivo: que nadie ponga plata de su bolsillo y que la empresa no pierda.
+        </div>
+        <div class="grid-3" style="margin-bottom:14px">
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--amber)"></div><div class="kpi-label">Total anticipado</div><div class="kpi-value" id="via-total">—</div></div>
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--green)"></div><div class="kpi-label">Rendido</div><div class="kpi-value" style="color:var(--green)" id="via-rendido">—</div></div>
+          <div class="kpi-card"><div class="kpi-accent" style="background:var(--red)"></div><div class="kpi-label">Sin rendir</div><div class="kpi-value" style="color:var(--red)" id="via-pendiente">—</div></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Empleado</th><th>Obra</th><th>Anticipo</th><th>Rendido</th><th>Diferencia</th><th>Estado</th><th>Acción</th></tr></thead>
+              <tbody id="viaticos-tbody"><tr><td colspan="7" class="empty-state"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TICKETS IA ===== -->
+      <div class="section" id="sec-tickets">
+        <div class="section-hdr"><div><h2>Lector de tickets con IA</h2><p>Fotografiá el ticket y lo clasificamos automáticamente</p></div></div>
+        <div class="grid-2">
+          <div>
+            <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+              <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleTicketFile(this)">
+              <div style="font-size:32px;margin-bottom:10px">📄</div>
+              <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px">Subí una foto del ticket</div>
+              <div style="font-size:12px;color:var(--text3)">JPG, PNG · Desde cámara del celular</div>
+            </div>
+            <div id="ticket-preview" style="display:none;margin-top:12px"><img id="preview-img" style="width:100%;border-radius:var(--radius);border:1px solid var(--border)" alt="ticket"></div>
+            <div id="ticket-loading" style="display:none;margin-top:16px;text-align:center">
+              <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Analizando con IA...</div>
+              <div class="progress"><div class="progress-fill" id="ai-progress" style="width:0%;background:var(--accent);transition:width 1.5s"></div></div>
+            </div>
+            <div id="ticket-result" style="display:none;background:var(--surface2);border-radius:var(--radius);padding:14px;margin-top:12px;font-size:12px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">Resultado del análisis</div>
+              <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Comercio</span><span style="color:var(--text);font-weight:500;font-family:var(--mono)" id="tr-comercio">—</span></div>
+              <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Fecha</span><span style="color:var(--text);font-weight:500;font-family:var(--mono)" id="tr-fecha-t">—</span></div>
+              <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Monto</span><span style="color:var(--text);font-weight:500;font-family:var(--mono)" id="tr-monto">—</span></div>
+              <div style="display:flex;justify-content:space-between;padding:5px 0;margin-bottom:10px"><span style="color:var(--text3)">Categoría</span><span style="color:var(--text);font-weight:500" id="tr-cat">—</span></div>
+              <div style="display:flex;gap:6px">
+                <select class="form-select" id="ticket-cat" style="flex:1;font-size:12px"><option>Materiales</option><option>Combustible</option><option>Herramientas</option><option>Alimentos</option><option>Hospedaje</option><option>Otro</option></select>
+                <button class="btn btn-primary" onclick="confirmarTicket()">Confirmar</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-hdr"><div><h2>Tickets este mes</h2></div></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Fecha</th><th>Comercio</th><th>Categoría</th><th>Monto</th></tr></thead>
+                <tbody id="tickets-tbody"><tr><td colspan="4" class="empty-state"><div class="spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ADMINISTRACIÓN (MARIELA) ===== -->
+      <div class="section" id="sec-admin">
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px">Panel de Mariela</div>
+          <div style="font-family:var(--display);font-size:20px;font-weight:700">Administración</div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="kpi-card" style="cursor:pointer" onclick="showAdminTab('sueldos')">
+            <div class="kpi-accent" style="background:var(--green)"></div>
+            <div class="kpi-label">Sueldos</div>
+            <div class="kpi-value" style="font-size:18px">Quincena</div>
+            <div class="kpi-sub">5 empleados en relación de dependencia</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer" onclick="showAdminTab('permisos')">
+            <div class="kpi-accent" style="background:var(--amber)"></div>
+            <div class="kpi-label">Permisos de ingreso</div>
+            <div class="kpi-value" style="font-size:18px">Doc.</div>
+            <div class="kpi-sub">Control Documentario + Estudio Secondi</div>
+          </div>
+          <div class="kpi-card" style="cursor:pointer" onclick="showAdminTab('ordenes')">
+            <div class="kpi-accent" style="background:var(--accent)"></div>
+            <div class="kpi-label">Órdenes de pago</div>
+            <div class="kpi-value" style="font-size:18px">Pagos</div>
+            <div class="kpi-sub">Proveedores y gastos</div>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-primary btn-sm admin-tab active-tab" onclick="showAdminTab('sueldos')">Sueldos</button>
+          <button class="btn btn-ghost btn-sm admin-tab" onclick="showAdminTab('permisos')">Permisos</button>
+          <button class="btn btn-ghost btn-sm admin-tab" onclick="showAdminTab('ordenes')">Órdenes de pago</button>
+        </div>
+
+        <!-- SUELDOS -->
+        <div id="admin-sueldos" class="card">
+          <div class="section-hdr"><div><h2>Liquidación de sueldos</h2><p>Quincena · 5 empleados</p></div><button class="btn btn-ghost btn-sm" onclick="openNuevoSueldo()">+ Registrar pago</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Empleado</th><th>Quincena</th><th>Básico</th><th>Horas extra</th><th>Total</th><th>Estado</th></tr></thead>
+              <tbody id="sueldos-tbody">
+                <tr><td class="td-main">Ariel Roberto Coto</td><td>1ra quincena abr</td><td style="font-family:var(--mono)">$—</td><td style="font-family:var(--mono)">$—</td><td style="font-family:var(--mono);color:var(--green)">$—</td><td><span class="chip chip-amber">Pendiente</span></td></tr>
+                <tr><td class="td-main">Ezequiel Moreno</td><td>1ra quincena abr</td><td style="font-family:var(--mono)">$—</td><td style="font-family:var(--mono)">$—</td><td style="font-family:var(--mono);color:var(--green)">$—</td><td><span class="chip chip-amber">Pendiente</span></td></tr>
+                <tr><td class="td-main">Matías</td><td>1ra quincena abr</td><td style="font-family:var(--mono)">$—</td><td style="font-family:var(--mono)">$—</td><td style="font-family:var(--mono);color:var(--green)">$—</td><td><span class="chip chip-amber">Pendiente</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PERMISOS -->
+        <div id="admin-permisos" class="card" style="display:none">
+          <div class="section-hdr"><div><h2>Permisos de ingreso a obra</h2><p>Documentación por obra y empleado</p></div><button class="btn btn-primary btn-sm" onclick="openNuevoPermiso()">+ Nueva gestión</button></div>
+          <div style="background:var(--surface2);border-radius:var(--radius);padding:14px;margin-bottom:14px;font-size:12px">
+            <div style="font-weight:600;color:var(--text);margin-bottom:8px">Plataformas utilizadas</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <a href="https://www.controldocumentario.com" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;background:rgba(59,130,246,0.1);padding:5px 10px;border-radius:6px">🔗 Control Documentario</a>
+              <a href="https://www.estudiosecondi.com.ar" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;background:rgba(59,130,246,0.1);padding:5px 10px;border-radius:6px">🔗 Estudio Secondi</a>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Obra</th><th>Empleado</th><th>Plataforma</th><th>Tipo</th><th>Estado</th><th>Vence</th></tr></thead>
+              <tbody id="permisos-tbody">
+                <tr><td class="td-main">CCTV Minera Jujuy</td><td>Ariel Coto</td><td>Control Doc.</td><td>RRHH</td><td><span class="chip chip-green">Aprobado</span></td><td>15/05</td></tr>
+                <tr><td class="td-main">CCTV Minera Jujuy</td><td>Ariel Coto</td><td>Estudio Secondi</td><td>Seg. e Higiene</td><td><span class="chip chip-green">Aprobado</span></td><td>15/05</td></tr>
+                <tr><td class="td-main">Banco Nación CABA</td><td>Ezequiel Moreno</td><td>Control Doc.</td><td>RRHH</td><td><span class="chip chip-amber">En trámite</span></td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:12px;padding:10px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);border-radius:8px;font-size:12px;color:var(--text2)">
+            ⏱ <strong style="color:var(--amber)">Recordá:</strong> Los permisos tardan 2-3 días hábiles. Gestionarlos con anticipación antes de la fecha de inicio de obra.
+          </div>
+        </div>
+
+        <!-- ÓRDENES DE PAGO -->
+        <div id="admin-ordenes" class="card" style="display:none">
+          <div class="section-hdr"><div><h2>Órdenes de pago</h2><p>Proveedores y gastos</p></div><button class="btn btn-primary btn-sm" onclick="openNuevoOrdenPago()">+ Nueva orden</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Proveedor</th><th>Concepto</th><th>Monto</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+              <tbody id="ordenes-tbody">
+                <tr><td class="td-main">Electro Sur SRL</td><td>Materiales obra Jujuy</td><td style="font-family:var(--mono)">$280.000</td><td style="color:var(--red)">03/04 ⚠</td><td><span class="chip chip-red">Vencida</span></td></tr>
+                <tr><td class="td-main">Distribuidora Norte</td><td>Cable UTP Cat6</td><td style="font-family:var(--mono)">$145.000</td><td>15/04</td><td><span class="chip chip-amber">Pendiente</span></td></tr>
+                <tr><td class="td-main">Ferretería Central</td><td>Herramientas</td><td style="font-family:var(--mono)">$89.000</td><td>20/04</td><td><span class="chip chip-blue">Programado</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+</div><!-- /app-screen -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">—</div>
+    <div id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// SUPABASE
+// ============================================================
+const SUPA_URL = 'https://mychvyrgupdxxywppnzx.supabase.co';
+const SUPA_KEY = 'sb_publishable_P8M63XVzuislYvyidFoHnA_gar6Y0XN';
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+let currentUser = null, currentUsuario = null;
+let ticketData = null;
+
+// ============================================================
+// AUTH
+// ============================================================
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Ingresando...';
+  const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    errEl.textContent = 'Email o contraseña incorrectos.';
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Ingresar al sistema'; return;
+  }
+  currentUser = data.user;
+  await loadUsuario(email);
+  showApp();
+}
+
+async function loadUsuario(email) {
+  const { data } = await db.from('usuarios').select('*').eq('email', email).single();
+  currentUsuario = data;
+  if (data) {
+    const ini = data.nombre.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('sidebar-avatar').textContent = ini;
+    document.getElementById('sidebar-name').textContent = data.nombre.split(' ')[0];
+    const rmap = { dueno:'Dueño', socio:'Socia', gestion:'Gestión', tecnico:'Técnico', encargado:'Encargado' };
+    document.getElementById('sidebar-role').textContent = rmap[data.rol] || data.rol;
+  }
+}
+
+async function doLogout() {
+  await db.auth.signOut();
+  currentUser = null; currentUsuario = null;
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('rpt-fecha').value = new Date().toISOString().split('T')[0];
+  loadAll();
+}
+
+window.addEventListener('load', async () => {
+  const { data: { session } } = await db.auth.getSession();
+  if (session) { currentUser = session.user; await loadUsuario(session.user.email); showApp(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+
+function loadAll() {
+  loadDashboard(); loadKanban(); loadObrasSelect(); loadReportesRecientes();
+  loadViaticos(); loadComisiones(); loadFinanciero(); loadTickets(); loadAriel();
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const TITLES = { dashboard:'Dashboard', ariel:'Panel de Ariel', kanban:'Tablero de obras', reporte:'Reporte diario', financiero:'Estado financiero', comisiones:'Comisiones', viaticos:'Viáticos', tickets:'Tickets IA', admin:'Administración' };
+function navigate(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('topbar-title').textContent = TITLES[id] || id;
+}
+
+// ============================================================
+// FORMATTERS
+// ============================================================
+function fp(n) {
+  if (n == null || isNaN(n)) return '—';
+  if (Math.abs(n) >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1000) return '$' + Math.round(n/1000) + 'K';
+  return '$' + parseInt(n).toLocaleString('es-AR');
+}
+function fd(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T12:00:00');
+  return dt.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' });
+}
+function estadoChip(e) {
+  const m = { en_curso:'chip-green', demorada:'chip-amber', iniciando:'chip-blue', pausada:'chip-gray', cerrada:'chip-gray', cotizacion:'chip-purple', adjudicada:'chip-blue', entrega:'chip-amber' };
+  const l = { en_curso:'En curso', demorada:'Demorada', iniciando:'Iniciando', pausada:'Pausada', cerrada:'Cerrada', cotizacion:'Cotización', adjudicada:'Adjudicada', entrega:'Entrega' };
+  return `<span class="chip ${m[e]||'chip-gray'}">${l[e]||e}</span>`;
+}
+function kpiChip(s) {
+  if (s >= 90) return '<span class="chip chip-green">Excelente</span>';
+  if (s >= 75) return '<span class="chip chip-blue">Muy bueno</span>';
+  if (s >= 60) return '<span class="chip chip-amber">Aceptable</span>';
+  return '<span class="chip chip-red">Por mejorar</span>';
+}
+function kpiBono(s) { return s>=90?8:s>=75?6:s>=60?4:s>=40?3:0; }
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function loadDashboard() {
+  const today = new Date().toISOString().split('T')[0];
+  const { data: obras } = await db.from('obras').select('*').in('estado', ['en_curso','demorada','iniciando','cotizacion','adjudicada']);
+  const activas = obras?.filter(o => ['en_curso','demorada','iniciando'].includes(o.estado)) || [];
+  document.getElementById('dash-obras').textContent = activas.length;
+  document.getElementById('dash-obras-sub').textContent = `${obras?.length||0} en total`;
+
+  const { data: repHoy } = await db.from('reportes').select('id').eq('fecha', today);
+  document.getElementById('dash-rep-hoy').textContent = repHoy?.length ?? 0;
+
+  const { data: repRec } = await db.from('reportes').select('kpi_total').order('created_at',{ascending:false}).limit(10);
+  const kpiProm = repRec?.length ? Math.round(repRec.reduce((a,r)=>a+(r.kpi_total||0),0)/repRec.length) : '—';
+  document.getElementById('dash-kpi').textContent = kpiProm;
+
+  const { data: vias } = await db.from('viaticos').select('id').in('estado',['pendiente','parcial']);
+  document.getElementById('dash-via').textContent = vias?.length ?? 0;
+
+  // Obras list
+  const el = document.getElementById('dash-obras-list');
+  if (!activas.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏗️</div>No hay obras activas</div>'; }
+  else { el.innerHTML = activas.map(o => `
+    <div class="obra-card" onclick="openObraDetail('${o.id}')">
+      <div class="obra-header"><div><div class="obra-name">${o.nombre} — ${o.ubicacion||''}</div><div class="obra-meta">${o.cliente} · ${fp(o.presupuesto)}</div></div>${estadoChip(o.estado)}</div>
+      <div class="obra-bar-label"><span>Avance</span><span>${o.avance_total||0}%</span></div>
+      <div class="progress"><div class="progress-fill" style="width:${o.avance_total||0}%;background:${o.estado==='demorada'?'var(--amber)':'var(--green)'}"></div></div>
+    </div>`).join(''); }
+
+  // Alertas
+  const aEl = document.getElementById('dash-alertas');
+  const alertas = [];
+  activas.filter(o=>o.estado==='demorada').forEach(o => alertas.push(`<div style="display:flex;gap:8px;padding:8px;background:rgba(245,158,11,0.07);border-radius:8px;border:1px solid rgba(245,158,11,0.15)"><span style="color:var(--amber)">⚠</span><div><div style="font-size:12px;font-weight:500;color:var(--text)">${o.nombre}</div><div style="font-size:11px;color:var(--text3)">Demorada · ${o.ubicacion}</div></div></div>`));
+  if (repHoy?.length) alertas.push(`<div style="display:flex;gap:8px;padding:8px;background:rgba(16,185,129,0.07);border-radius:8px;border:1px solid rgba(16,185,129,0.15)"><span style="color:var(--green)">✓</span><div style="font-size:12px;color:var(--text)">${repHoy.length} reporte${repHoy.length>1?'s':''} recibido${repHoy.length>1?'s':''} hoy</div></div>`);
+  aEl.innerHTML = alertas.length ? alertas.join('') : '<div class="empty-state">Sin alertas</div>';
+
+  // Últimos reportes
+  const { data: ur } = await db.from('reportes').select('fecha,obras(nombre),usuarios(nombre),kpi_total').order('created_at',{ascending:false}).limit(4);
+  const urEl = document.getElementById('dash-ult-rep');
+  if (!ur?.length) { urEl.innerHTML = '<div class="empty-state">Sin reportes aún</div>'; return; }
+  urEl.innerHTML = ur.map(r => `
+    <div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface2);border-radius:6px">
+      <div><div style="color:var(--text);font-weight:500;font-size:12px">${r.obras?.nombre||'—'}</div><div style="color:var(--text3);font-size:11px">${fd(r.fecha)} · ${r.usuarios?.nombre?.split(' ')[0]||'—'}</div></div>
+      ${r.kpi_total ? kpiChip(r.kpi_total) : '<span class="chip chip-gray">—</span>'}
+    </div>`).join('');
+}
+
+// ============================================================
+// KANBAN
+// ============================================================
+const KANBAN_COLS = [
+  { id:'cotizacion', label:'Cotización', color:'#6366f1' },
+  { id:'adjudicada', label:'Adjudicada', color:'#3b82f6' },
+  { id:'iniciando', label:'Logística', color:'#f59e0b' },
+  { id:'en_curso', label:'En ejecución', color:'#10b981', extra:['demorada'] },
+  { id:'entrega', label:'Entrega / Cierre', color:'#06b6d4' },
+  { id:'cerrada', label:'Cerrada', color:'#475569' },
+];
+
+async function loadKanban() {
+  const { data: obras } = await db.from('obras').select('*').order('created_at',{ascending:false});
+  const board = document.getElementById('kanban-board');
+  if (!obras) return;
+  board.innerHTML = KANBAN_COLS.map(col => {
+    const estadosCol = [col.id, ...(col.extra||[])];
+    const cards = (obras||[]).filter(o => estadosCol.includes(o.estado));
+    return `
+    <div class="kanban-col" id="kcol-${col.id}" 
+      ondragover="onDragOver(event,'${col.id}')" 
+      ondragleave="onDragLeave(event,'${col.id}')"
+      ondrop="onDrop(event,'${col.id}')">
+      <div class="kanban-col-top" style="background:${col.color}"></div>
+      <div class="kanban-col-header">
+        <div class="kanban-col-title" style="color:${col.color}">${col.label}</div>
+        <div class="kanban-col-count">${cards.length} obra${cards.length!==1?'s':''}</div>
+      </div>
+      <div class="kanban-cards" id="col-${col.id}">
+        ${cards.map(o => `
+          <div class="kanban-card" 
+            draggable="true"
+            ondragstart="onDragStart(event,'${o.id}')"
+            ondragend="onDragEnd(event)"
+            onclick="openObraDetail('${o.id}')">
+            ${o.estado==='demorada'?'<div style="font-size:10px;color:var(--amber);margin-bottom:4px">⚠ Demorada</div>':''}
+            <div class="kanban-card-name">${o.nombre}</div>
+            <div class="kanban-card-client">${o.cliente} · ${o.ubicacion||'—'}</div>
+            <div class="kanban-card-footer">
+              <div class="kanban-card-amount">${fp(o.presupuesto)}</div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <div style="font-size:11px;color:var(--text3)">${o.avance_total||0}%</div>
+                <div class="progress" style="width:40px;margin-top:0"><div class="progress-fill" style="width:${o.avance_total||0}%;background:${col.color}"></div></div>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="kanban-add" onclick="openNuevaObra('${col.id}')">+ Agregar obra</div>
+    </div>`;
+  }).join('');
+}
+
+// DRAG AND DROP
+let draggedObraId = null;
+function onDragStart(e, obraId) {
+  draggedObraId = obraId;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
+}
+function onDragOver(e, colId) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.getElementById('kcol-'+colId)?.classList.add('drag-over');
+}
+function onDragLeave(e, colId) {
+  document.getElementById('kcol-'+colId)?.classList.remove('drag-over');
+}
+async function onDrop(e, colId) {
+  e.preventDefault();
+  document.getElementById('kcol-'+colId)?.classList.remove('drag-over');
+  if (!draggedObraId) return;
+  await db.from('obras').update({ estado: colId }).eq('id', draggedObraId);
+  draggedObraId = null;
+  showToast('Obra movida ✓', 'success');
+  loadKanban(); loadDashboard();
+}
+
+async function openObraDetail(obraId) {
+  const { data: o } = await db.from('obras').select('*').eq('id', obraId).single();
+  if (!o) return;
+  const { data: reportes } = await db.from('reportes').select('fecha,kpi_total,avance_dia,usuarios(nombre)').eq('obra_id', obraId).order('fecha',{ascending:false}).limit(5);
+  const { data: gastos } = await db.from('gastos').select('monto,categoria').eq('obra_id', obraId);
+  const totalGastos = gastos?.reduce((a,g)=>a+(g.monto||0),0)||0;
+  const margen = o.presupuesto ? Math.round((1-totalGastos/o.presupuesto)*100) : null;
+
+  document.getElementById('modal-title').innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between"><span>${o.nombre}</span>${estadoChip(o.estado)}</div>`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="obra-detail-grid">
+      <div class="obra-detail-item"><div class="obra-detail-label">Cliente</div><div class="obra-detail-value">${o.cliente}</div></div>
+      <div class="obra-detail-item"><div class="obra-detail-label">Ubicación</div><div class="obra-detail-value">${o.ubicacion||'—'}</div></div>
+      <div class="obra-detail-item"><div class="obra-detail-label">Presupuesto</div><div class="obra-detail-value" style="font-family:var(--mono);color:var(--green)">${fp(o.presupuesto)}</div></div>
+      <div class="obra-detail-item"><div class="obra-detail-label">Gastos registrados</div><div class="obra-detail-value" style="font-family:var(--mono);color:var(--red)">${fp(totalGastos)}</div></div>
+      <div class="obra-detail-item"><div class="obra-detail-label">Inicio</div><div class="obra-detail-value">${fd(o.fecha_inicio)}</div></div>
+      <div class="obra-detail-item"><div class="obra-detail-label">Margen estimado</div><div class="obra-detail-value" style="color:${margen>25?'var(--green)':margen>10?'var(--amber)':'var(--red)'}">${margen!=null?margen+'%':'—'}</div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:4px"><span>Avance total</span><span>${o.avance_total||0}%</span></div>
+      <div class="progress" style="height:8px"><div class="progress-fill" style="width:${o.avance_total||0}%;background:var(--green)"></div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">Cambiar etapa</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${KANBAN_COLS.map(c=>`<button class="btn btn-ghost btn-sm" style="${o.estado===c.id?'border-color:'+c.color+';color:'+c.color:''}" onclick="cambiarEstadoObra('${o.id}','${c.id}')">${c.label}</button>`).join('')}
+      </div>
+    </div>
+    ${reportes?.length ? `
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">Últimos reportes</div>
+      ${reportes.map(r=>`
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface2);border-radius:6px;margin-bottom:4px;font-size:12px">
+          <div><span style="color:var(--text)">${fd(r.fecha)}</span> <span style="color:var(--text3)">· ${r.usuarios?.nombre?.split(' ')[0]||'—'} · +${r.avance_dia||0}%</span></div>
+          ${r.kpi_total ? kpiChip(r.kpi_total) : ''}
+        </div>`).join('')}
+    </div>` : ''}`;
+
+  document.getElementById('modal-footer').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Cerrar</button><button class="btn btn-primary" onclick="closeModal();navigate('reporte',document.querySelector('[onclick*=reporte]'))">+ Reporte</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+async function cambiarEstadoObra(obraId, nuevoEstado) {
+  await db.from('obras').update({ estado: nuevoEstado }).eq('id', obraId);
+  closeModal(); loadKanban(); loadDashboard();
+  showToast('Estado actualizado ✓', 'success');
+}
+
+function openNuevaObra(estadoInicial='cotizacion') {
+  document.getElementById('modal-title').textContent = 'Nueva obra';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label class="form-label">Nombre de la obra</label><input type="text" class="form-input" id="no-nombre" placeholder="Ej: Fibra óptica — Mendoza"></div>
+    <div class="form-group"><label class="form-label">Cliente</label><input type="text" class="form-input" id="no-cliente" placeholder="Nombre del cliente"></div>
+    <div class="form-group"><label class="form-label">Ubicación / Ciudad</label><input type="text" class="form-input" id="no-ubicacion" placeholder="Córdoba, Jujuy, CABA..."></div>
+    <div class="grid-2">
+      <div class="form-group"><label class="form-label">Fecha de inicio</label><input type="date" class="form-input" id="no-inicio"></div>
+      <div class="form-group"><label class="form-label">Presupuesto ($)</label><input type="number" class="form-input" id="no-presupuesto" placeholder="0" style="font-family:var(--mono)"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Etapa inicial</label>
+      <select class="form-select" id="no-estado">
+        ${KANBAN_COLS.map(c=>`<option value="${c.id}" ${c.id===estadoInicial?'selected':''}>${c.label}</option>`).join('')}
+      </select></div>`;
+  document.getElementById('modal-footer').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarObra()">Guardar obra</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+async function guardarObra() {
+  const nombre = document.getElementById('no-nombre').value.trim();
+  const cliente = document.getElementById('no-cliente').value.trim();
+  if (!nombre || !cliente) { showToast('Completá nombre y cliente', 'error'); return; }
+  const { error } = await db.from('obras').insert({
+    nombre, cliente,
+    ubicacion: document.getElementById('no-ubicacion').value.trim(),
+    fecha_inicio: document.getElementById('no-inicio').value || null,
+    presupuesto: parseFloat(document.getElementById('no-presupuesto').value) || null,
+    estado: document.getElementById('no-estado').value
+  });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  closeModal(); showToast('Obra creada ✓', 'success');
+  loadKanban(); loadDashboard(); loadObrasSelect();
+}
+
+// ============================================================
+// REPORTE DIARIO
+// ============================================================
+async function loadObrasSelect() {
+  const { data: obras } = await db.from('obras').select('id,nombre,ubicacion,presupuesto,avance_total,estado').in('estado',['en_curso','demorada','iniciando','adjudicada']);
+  const sel = document.getElementById('rpt-obra-id');
+  sel.innerHTML = obras?.map(o=>`<option value="${o.id}" data-pres="${o.presupuesto||0}" data-avance="${o.avance_total||0}" data-est="${o.estado}">${o.nombre}${o.ubicacion?' — '+o.ubicacion:''}</option>`).join('') || '<option>Sin obras activas</option>';
+  sel.addEventListener('change', updateObraInfo);
+  updateObraInfo();
+
+  const { data: users } = await db.from('usuarios').select('id,nombre').eq('activo',true);
+  const rsel = document.getElementById('rpt-responsable');
+  rsel.innerHTML = users?.map(u=>`<option value="${u.id}">${u.nombre}</option>`).join('') || '';
+}
+
+function updateObraInfo() {
+  const sel = document.getElementById('rpt-obra-id');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt) return;
+  const pres = parseFloat(opt.dataset.pres)||0;
+  const avance = parseFloat(opt.dataset.avance)||0;
+  document.getElementById('obra-info-content').innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Presupuesto</span><span style="font-family:var(--mono);color:var(--green)">${fp(pres)}</span></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Avance actual</span><span style="font-family:var(--mono)">${avance}%</span></div>
+    <div class="progress"><div class="progress-fill" style="width:${avance}%;background:var(--green)"></div></div>`;
+}
+
+function addProduccionRow() {
+  const list = document.getElementById('produccion-list');
+  const n = list.children.length + 1;
+  const d = document.createElement('div');
+  d.className = 'produccion-item';
+  d.innerHTML = `<span class="produccion-num">#${n}</span><div style="flex:1"><input type="text" class="form-input" placeholder="Descripción de la tarea" style="margin-bottom:6px"><div style="display:flex;gap:6px"><input type="number" class="form-input" placeholder="Cant. prevista" style="flex:1;font-family:var(--mono)"><input type="number" class="form-input" placeholder="Cant. realizada" style="flex:1;font-family:var(--mono)"></div></div><button onclick="this.closest('.produccion-item').remove()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:4px;flex-shrink:0">×</button>`;
+  list.appendChild(d);
+}
+
+function addGastoRow() {
+  const d = document.createElement('div');
+  d.style.cssText = 'display:flex;gap:6px;align-items:center;margin-top:6px';
+  d.innerHTML = '<select class="form-select" style="flex:1.2"><option>Materiales</option><option>Herramientas</option><option>Combustible</option><option>Alimentos</option><option>Hospedaje</option><option>Otro</option></select><input type="text" class="form-input" placeholder="Descripción" style="flex:2"><input type="number" class="form-input" placeholder="$" style="flex:1;font-family:var(--mono)"><button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:4px">×</button>';
+  document.getElementById('gastos-list').appendChild(d);
+}
+
+function handleFotos(input) {
+  const grid = document.getElementById('foto-grid');
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const div = document.createElement('div');
+      div.className = 'foto-thumb';
+      div.innerHTML = `<img src="${e.target.result}" alt="foto">`;
+      grid.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function enviarReporte() {
+  const obraId = document.getElementById('rpt-obra-id').value;
+  const fecha = document.getElementById('rpt-fecha').value;
+  if (!obraId || !fecha || !currentUsuario) { showToast('Completá obra y fecha', 'error'); return; }
+
+  const btn = document.getElementById('btn-enviar');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Guardando...';
+
+  // Geolocalización
+  let lat = null, lng = null;
+  if (navigator.geolocation) {
+    try {
+      const pos = await new Promise((res,rej) => navigator.geolocation.getCurrentPosition(res,rej,{timeout:4000}));
+      lat = pos.coords.latitude; lng = pos.coords.longitude;
+    } catch(e) {}
+  }
+
+  // Calcular producción para KPI automático
+  const prodItems = document.getElementById('produccion-list').querySelectorAll('.produccion-item');
+  let totalPrevisto = 0, totalRealizado = 0;
+  prodItems.forEach(item => {
+    const inputs = item.querySelectorAll('input[type=number]');
+    totalPrevisto += parseFloat(inputs[0]?.value)||0;
+    totalRealizado += parseFloat(inputs[1]?.value)||0;
+  });
+  const rendimiento = totalPrevisto > 0 ? Math.min(100, Math.round(totalRealizado/totalPrevisto*100)) : 75;
+  const fotos = document.getElementById('foto-grid').children.length;
+  const kpiAuto = Math.min(100, Math.round(rendimiento*0.6 + Math.min(fotos,5)*4 + 20));
+  const bonoPct = kpiBono(kpiAuto);
+  const huboInc = document.getElementById('inconveniente-sel').value === 'si';
+
+  // Avance estimado
+  const avanceEstimado = Math.min(100, Math.round(rendimiento * 0.8));
+
+  const { data: reporte, error } = await db.from('reportes').insert({
+    obra_id: obraId,
+    encargado_id: currentUsuario.id,
+    fecha, avance_dia: avanceEstimado,
+    kpi_total: kpiAuto, bono_porcentaje: bonoPct,
+    hubo_inconveniente: huboInc,
+    descripcion_inconveniente: huboInc ? document.getElementById('rpt-inconveniente').value : null,
+    notas: document.getElementById('rpt-notas').value,
+    ubicacion_lat: lat, ubicacion_lng: lng
+  }).select().single();
+
+  if (error) {
+    showToast(error.code==='23505'?'Ya existe reporte para esta obra y fecha':'Error: '+error.message, 'error');
+    btn.disabled=false; btn.textContent='Enviar reporte del día'; return;
+  }
+
+  // Guardar gastos
+  const gastoRows = document.getElementById('gastos-list').querySelectorAll('div');
+  for (const fila of gastoRows) {
+    const sel = fila.querySelector('select');
+    const inps = fila.querySelectorAll('input');
+    if (sel && inps[1]?.value) {
+      await db.from('gastos').insert({ reporte_id:reporte.id, obra_id:obraId, categoria:sel.value, descripcion:inps[0]?.value||'', monto:parseFloat(inps[1].value), fecha, registrado_por:currentUsuario.id });
+    }
+  }
+  await db.from('obras').update({ avance_total: avanceEstimado }).eq('id', obraId);
+
+  btn.disabled=false; btn.textContent='Enviar reporte del día';
+  showToast(`Reporte guardado ✓ KPI automático: ${kpiAuto}`, 'success');
+  loadReportesRecientes(); loadDashboard(); loadKanban();
+}
+
+async function loadReportesRecientes() {
+  const { data } = await db.from('reportes').select('fecha,obras(nombre),usuarios(nombre),kpi_total').order('created_at',{ascending:false}).limit(5);
+  const el = document.getElementById('reportes-recientes');
+  if (!data?.length) { el.innerHTML = '<div class="empty-state">Sin reportes aún</div>'; return; }
+  el.innerHTML = data.map(r=>`
+    <div style="display:flex;justify-content:space-between;padding:8px;background:var(--surface2);border-radius:6px">
+      <div><div style="color:var(--text);font-weight:500">${r.obras?.nombre||'—'}</div><div style="color:var(--text3);font-size:11px">${fd(r.fecha)} · ${r.usuarios?.nombre?.split(' ')[0]||'—'}</div></div>
+      ${r.kpi_total ? kpiChip(r.kpi_total) : '<span class="chip chip-gray">—</span>'}
+    </div>`).join('');
+}
+
+// ============================================================
+// FINANCIERO
+// ============================================================
+async function loadFinanciero() {
+  const { data: obras } = await db.from('obras').select('id,nombre,presupuesto,estado').in('estado',['en_curso','demorada','iniciando']);
+  const presup = obras?.reduce((a,o)=>a+(o.presupuesto||0),0)||0;
+  document.getElementById('fin-presup').textContent = fp(presup);
+  document.getElementById('fin-obras').textContent = obras?.length??0;
+
+  const { data: gastos } = await db.from('gastos').select('monto,categoria,obra_id');
+  const totalG = gastos?.reduce((a,g)=>a+(g.monto||0),0)||0;
+  document.getElementById('fin-gastos').textContent = fp(totalG);
+
+  const { data: vias } = await db.from('viaticos').select('monto_anticipado');
+  document.getElementById('fin-via').textContent = fp(vias?.reduce((a,v)=>a+(v.monto_anticipado||0),0)||0);
+
+  // Presup vs real
+  const pvEl = document.getElementById('fin-pvsr');
+  if (!obras?.length) { pvEl.innerHTML = '<div class="empty-state">Sin obras</div>'; }
+  else {
+    pvEl.innerHTML = obras.map(o => {
+      const gObra = gastos?.filter(g=>g.obra_id===o.id).reduce((a,g)=>a+(g.monto||0),0)||0;
+      const pct = o.presupuesto ? Math.round(gObra/o.presupuesto*100) : 0;
+      const color = pct>80?'var(--red)':pct>50?'var(--amber)':'var(--green)';
+      return `<div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--text2)">${o.nombre}</span>
+          <span style="font-family:var(--mono);color:${color}">${fp(gObra)} / ${fp(o.presupuesto)}</span>
+        </div>
+        <div class="progress" style="height:6px"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">${pct}% del presupuesto usado</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Por categoría
+  const catEl = document.getElementById('fin-cats');
+  if (!gastos?.length) { catEl.innerHTML = '<div class="empty-state">Sin gastos</div>'; return; }
+  const byCat = {};
+  gastos.forEach(g => { byCat[g.categoria||'Otro'] = (byCat[g.categoria||'Otro']||0)+(g.monto||0); });
+  catEl.innerHTML = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,monto])=>`
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="color:var(--text2)">${cat}</span><span style="font-family:var(--mono);color:var(--text)">${fp(monto)}</span>
+      </div>
+      <div class="progress" style="margin-top:0"><div class="progress-fill" style="width:${Math.round(monto/totalG*100)}%;background:var(--accent)"></div></div>
+    </div>`).join('');
+}
+
+// ============================================================
+// VIÁTICOS
+// ============================================================
+async function loadViaticos() {
+  const { data } = await db.from('viaticos').select('*,empleado:usuarios(nombre),obra:obras(nombre)').order('created_at',{ascending:false});
+  const total = data?.reduce((a,v)=>a+(v.monto_anticipado||0),0)||0;
+  const rendido = data?.reduce((a,v)=>a+(v.monto_rendido||0),0)||0;
+  document.getElementById('via-total').textContent = fp(total);
+  document.getElementById('via-rendido').textContent = fp(rendido);
+  document.getElementById('via-pendiente').textContent = fp(total-rendido);
+  const tbody = document.getElementById('viaticos-tbody');
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No hay viáticos</td></tr>'; return; }
+  tbody.innerHTML = data.map(v => {
+    const diff = (v.monto_anticipado||0)-(v.monto_rendido||0);
+    const cm = {rendido:'chip-green',parcial:'chip-amber',pendiente:'chip-red'};
+    return `<tr>
+      <td class="td-main">${v.empleado?.nombre||'—'}</td><td>${v.obra?.nombre||'—'}</td>
+      <td style="font-family:var(--mono)">${fp(v.monto_anticipado)}</td>
+      <td style="font-family:var(--mono)">${fp(v.monto_rendido)}</td>
+      <td style="font-family:var(--mono);color:${diff>0?'var(--red)':diff<0?'var(--amber)':'var(--green)'}">${diff===0?'$0':fp(Math.abs(diff))}</td>
+      <td><span class="chip ${cm[v.estado]||'chip-gray'}">${v.estado}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="rendirViatico('${v.id}')">Rendir</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function openNuevoViatico() {
+  const { data: u } = await db.from('usuarios').select('id,nombre').eq('activo',true);
+  const { data: o } = await db.from('obras').select('id,nombre').in('estado',['en_curso','demorada','iniciando']);
+  document.getElementById('modal-title').textContent = 'Nuevo anticipo de viáticos';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label class="form-label">Empleado</label><select class="form-input" id="nv-emp">${u?.map(x=>`<option value="${x.id}">${x.nombre}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">Obra</label><select class="form-input" id="nv-obra">${o?.map(x=>`<option value="${x.id}">${x.nombre}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">Monto anticipado ($)</label><input type="number" class="form-input" id="nv-monto" placeholder="0" style="font-family:var(--mono)"></div>`;
+  document.getElementById('modal-footer').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="guardarViatico()">Guardar</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+async function guardarViatico() {
+  const monto = parseFloat(document.getElementById('nv-monto').value);
+  if (!monto) { showToast('Ingresá un monto','error'); return; }
+  const now = new Date();
+  const { error } = await db.from('viaticos').insert({ empleado_id:document.getElementById('nv-emp').value, obra_id:document.getElementById('nv-obra').value, monto_anticipado:monto, mes:now.getMonth()+1, anio:now.getFullYear() });
+  if (error) { showToast('Error: '+error.message,'error'); return; }
+  closeModal(); showToast('Anticipo registrado ✓','success'); loadViaticos();
+}
+
+async function rendirViatico(id) {
+  const monto = prompt('¿Cuánto rindió con comprobante? ($)');
+  if (!monto) return;
+  const m = parseFloat(monto);
+  const { data: v } = await db.from('viaticos').select('monto_anticipado').eq('id',id).single();
+  const estado = m >= (v?.monto_anticipado||0) ? 'rendido' : 'parcial';
+  await db.from('viaticos').update({ monto_rendido:m, estado }).eq('id',id);
+  showToast('Rendición registrada ✓','success'); loadViaticos();
+}
+
+// ============================================================
+// COMISIONES
+// ============================================================
+async function loadComisiones() {
+  const { data } = await db.from('reportes').select('fecha,kpi_total,bono_porcentaje,obras(nombre,presupuesto),usuarios(nombre)').order('created_at',{ascending:false}).limit(30);
+  const tbody = document.getElementById('comisiones-tbody');
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin reportes aún</td></tr>'; return; }
+  tbody.innerHTML = data.map(r=>`
+    <tr>
+      <td class="td-main">${r.usuarios?.nombre?.split(' ')[0]||'—'}</td>
+      <td>${r.obras?.nombre||'—'}</td>
+      <td>${fd(r.fecha)}</td>
+      <td><span style="font-size:11px;color:var(--text3)">Por producción real</span></td>
+      <td>${r.kpi_total ? kpiChip(r.kpi_total) : '—'}</td>
+      <td style="font-family:var(--mono);color:var(--green)">${r.bono_porcentaje?r.bono_porcentaje+'%':'—'}</td>
+    </tr>`).join('');
+}
+
+// ============================================================
+// TICKETS IA
+// ============================================================
+async function loadTickets() {
+  const { data } = await db.from('gastos').select('*').order('created_at',{ascending:false}).limit(20);
+  const tbody = document.getElementById('tickets-tbody');
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No hay tickets</td></tr>'; return; }
+  tbody.innerHTML = data.map(g=>`<tr><td>${fd(g.fecha)}</td><td class="td-main">${g.descripcion||'—'}</td><td><span class="chip chip-blue">${g.categoria||'—'}</span></td><td style="font-family:var(--mono);color:var(--green)">${fp(g.monto)}</td></tr>`).join('');
+}
+
+function handleTicketFile(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('preview-img').src = e.target.result;
+    document.getElementById('ticket-preview').style.display = 'block';
+    analyzeTicket(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeTicket(imageData) {
+  document.getElementById('ticket-loading').style.display = 'block';
+  document.getElementById('ticket-result').style.display = 'none';
+  const bar = document.getElementById('ai-progress');
+  bar.style.width = '0%';
+  setTimeout(()=>bar.style.width='60%',100);
+  setTimeout(()=>bar.style.width='90%',1200);
+  try {
+    const base64 = imageData.split(',')[1];
+    const mtype = imageData.split(';')[0].split(':')[1]||'image/jpeg';
+    const res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mtype,data:base64}},{type:'text',text:'Analizá este ticket. Respondé SOLO con JSON (sin backticks): {"comercio":"nombre","fecha":"dd/mm/yyyy","monto":"$X.XXX","categoria":"Materiales|Combustible|Herramientas|Alimentos|Hospedaje|Otro","monto_numero":NUMERO}'}]}]})});
+    const d = await res.json();
+    const txt = (d.content||[]).map(c=>c.text||'').join('');
+    try { ticketData = JSON.parse(txt.replace(/```json|```/g,'').trim()); }
+    catch { ticketData = {comercio:'No detectado',fecha:'—',monto:'—',categoria:'Otro',monto_numero:0}; }
+    bar.style.width='100%';
+    setTimeout(()=>{
+      document.getElementById('ticket-loading').style.display='none';
+      document.getElementById('tr-comercio').textContent=ticketData.comercio;
+      document.getElementById('tr-fecha-t').textContent=ticketData.fecha;
+      document.getElementById('tr-monto').textContent=ticketData.monto;
+      document.getElementById('tr-cat').textContent=ticketData.categoria;
+      document.getElementById('ticket-result').style.display='block';
+    },300);
+  } catch(e) {
+    bar.style.width='100%';
+    setTimeout(()=>{document.getElementById('ticket-loading').style.display='none';document.getElementById('tr-comercio').textContent='Error de conexión';document.getElementById('ticket-result').style.display='block';},300);
+  }
+}
+
+async function confirmarTicket() {
+  if (!ticketData||!currentUsuario) return;
+  await db.from('gastos').insert({categoria:document.getElementById('ticket-cat').value,descripcion:ticketData.comercio,monto:ticketData.monto_numero||0,fecha:new Date().toISOString().split('T')[0],registrado_por:currentUsuario.id});
+  showToast('Ticket guardado ✓','success'); loadTickets();
+  document.getElementById('ticket-result').style.display='none';
+  document.getElementById('ticket-preview').style.display='none';
+  ticketData=null;
+}
+
+// ============================================================
+// ADMINISTRACIÓN (MARIELA)
+// ============================================================
+function showAdminTab(tab) {
+  ['sueldos','permisos','ordenes'].forEach(t => {
+    document.getElementById('admin-'+t).style.display = t===tab?'block':'none';
+  });
+  document.querySelectorAll('.admin-tab').forEach((btn,i) => {
+    const tabs = ['sueldos','permisos','ordenes'];
+    btn.className = 'btn btn-sm ' + (tabs[i]===tab?'btn-primary':'btn-ghost') + ' admin-tab';
+  });
+}
+
+function openNuevoPermiso() {
+  showToast('Función próximamente — por ahora usá los links de Control Documentario y Estudio Secondi','success');
+}
+function openNuevoSueldo() {
+  showToast('Módulo de sueldos completo próximamente','success');
+}
+function openNuevoOrdenPago() {
+  document.getElementById('modal-title').textContent = 'Nueva orden de pago';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label class="form-label">Proveedor</label><input type="text" class="form-input" id="op-prov" placeholder="Nombre del proveedor"></div>
+    <div class="form-group"><label class="form-label">Concepto</label><input type="text" class="form-input" id="op-concepto" placeholder="¿Por qué es el pago?"></div>
+    <div class="grid-2">
+      <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" class="form-input" id="op-monto" placeholder="0" style="font-family:var(--mono)"></div>
+      <div class="form-group"><label class="form-label">Vencimiento</label><input type="date" class="form-input" id="op-vto"></div>
+    </div>`;
+  document.getElementById('modal-footer').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="closeModal();showToast('Orden registrada ✓','success')">Guardar</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function openNuevoMovimiento() {
+  document.getElementById('modal-title').textContent = 'Cargar movimiento de caja';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label class="form-label">Tipo</label>
+      <select class="form-select" id="mov-tipo">
+        <option value="ingreso">Ingreso (cobro / entrada)</option>
+        <option value="egreso">Egreso (pago / salida)</option>
+      </select></div>
+    <div class="form-group"><label class="form-label">Categoría</label>
+      <select class="form-select" id="mov-cat">
+        <option>Cobro cliente</option><option>Sueldos</option><option>Proveedor</option>
+        <option>Alquiler</option><option>Impuestos</option><option>UOCRA</option>
+        <option>Préstamo</option><option>Gasto familia</option><option>Otro</option>
+      </select></div>
+    <div class="form-group"><label class="form-label">Descripción</label>
+      <input type="text" class="form-input" id="mov-desc" placeholder="Ej: Cobro Banco Galicia factura #2850"></div>
+    <div class="form-group"><label class="form-label">Memo / detalle</label>
+      <textarea class="form-textarea" id="mov-memo" placeholder="Notas internas, referencias, aclaraciones..." style="min-height:60px"></textarea></div>
+    <div class="grid-2">
+      <div class="form-group"><label class="form-label">Monto ($)</label>
+        <input type="number" class="form-input" id="mov-monto" placeholder="0" style="font-family:var(--mono)"></div>
+      <div class="form-group"><label class="form-label">Fecha</label>
+        <input type="date" class="form-input" id="mov-fecha" value="${new Date().toISOString().split('T')[0]}"></div>
+    </div>`;
+  document.getElementById('modal-footer').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="guardarMovimiento()">Guardar</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+async function guardarMovimiento() {
+  const desc = document.getElementById('mov-desc').value.trim();
+  const monto = parseFloat(document.getElementById('mov-monto').value);
+  const fecha = document.getElementById('mov-fecha').value;
+  if (!desc || !monto || !fecha) { showToast('Completá todos los campos','error'); return; }
+  const { error } = await db.from('movimientos_caja').insert({
+    tipo: document.getElementById('mov-tipo').value,
+    categoria: document.getElementById('mov-cat').value,
+    descripcion: desc,
+    memo: document.getElementById('mov-memo').value,
+    monto, fecha,
+    created_by: currentUsuario?.id
+  });
+  if (error) { showToast('Error: '+error.message,'error'); return; }
+  closeModal();
+  showToast('Movimiento guardado ✓','success');
+  loadAriel();
+}
+
+async function loadAriel() {
+  // Movimientos
+  const { data: movs } = await db.from('movimientos_caja').select('*').order('fecha',{ascending:true});
+  
+  const hoy = new Date();
+  const en30 = new Date(); en30.setDate(hoy.getDate()+30);
+  
+  const proximos = movs?.filter(m => {
+    const f = new Date(m.fecha+'T12:00:00');
+    return f >= hoy && f <= en30;
+  }) || [];
+
+  const totalIn = proximos.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0);
+  const totalOut = proximos.filter(m=>m.tipo==='egreso').reduce((a,m)=>a+m.monto,0);
+  const posicion = totalIn - totalOut;
+
+  // KPIs
+  document.getElementById('ariel-cobrar').textContent = fp(totalIn);
+  document.getElementById('ariel-cobrar-sub').textContent = `${proximos.filter(m=>m.tipo==='ingreso').length} ingresos proyectados`;
+  document.getElementById('ariel-pagar').textContent = fp(totalOut);
+  document.getElementById('ariel-pagar-sub').textContent = `${proximos.filter(m=>m.tipo==='egreso').length} pagos pendientes`;
+  document.getElementById('ariel-disponible').textContent = fp(posicion);
+
+  // Semáforo
+  const sem = document.getElementById('semaforo-container');
+  if (posicion > 0) {
+    sem.innerHTML = `<div class="semaforo-card semaforo-verde"><div class="semaforo-icon">🟢</div><div class="semaforo-estado">Estamos bien</div><div class="semaforo-sub">Hay más por cobrar (${fp(totalIn)}) que por pagar (${fp(totalOut)}) en los próximos 30 días.</div></div>`;
+  } else if (posicion > -500000) {
+    sem.innerHTML = `<div class="semaforo-card semaforo-amarillo"><div class="semaforo-icon">🟡</div><div class="semaforo-estado">Atención</div><div class="semaforo-sub">Los pagos y cobros están muy ajustados. Revisar prioridades de pago.</div></div>`;
+  } else {
+    sem.innerHTML = `<div class="semaforo-card semaforo-rojo"><div class="semaforo-icon">🔴</div><div class="semaforo-estado">Cuidado</div><div class="semaforo-sub">Los pagos superan los cobros en los próximos 30 días. Hay que gestionar urgente.</div></div>`;
+  }
+
+  // Posición proyectada
+  const posEl = document.getElementById('ariel-posicion');
+  posEl.textContent = fp(Math.abs(posicion));
+  posEl.style.color = posicion >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Lista flujo
+  const flujoEl = document.getElementById('ariel-flujo');
+  if (!movs?.length) { flujoEl.innerHTML = '<div class="empty-state">No hay movimientos cargados aún</div>'; return; }
+  
+  const todos = movs.slice(0,10);
+  flujoEl.innerHTML = todos.map(m => {
+    const f = new Date(m.fecha+'T12:00:00');
+    const vencido = f < hoy && m.estado !== 'confirmado';
+    const esIn = m.tipo === 'ingreso';
+    return `<div class="flujo-item">
+      <div>
+        <div class="flujo-label">${m.descripcion}</div>
+        <div class="flujo-fecha" style="${vencido?'color:var(--red)':''}">${vencido?'⚠ ':''} ${f.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})} · ${m.categoria}${m.memo?' · '+m.memo:''}</div>
+      </div>
+      <div class="flujo-amount ${esIn?'flujo-in':'flujo-out'}">${esIn?'+':'-'}${fp(m.monto)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+type+' show';
+  setTimeout(()=>t.className='toast',3500);
+}
+</script>
+</body>
+</html>
